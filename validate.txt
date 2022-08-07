@@ -1,0 +1,20 @@
+This wasn't illustrated very well in the original post. Let me try again...
+
+tr := http.Transport{
+  DialTLSContext: func(ctx context.Context, network, addr string) (net.Conn, err) {
+    conn, err := tls.Dial(network, addr, myConfig)
+    if err != nil {
+      return nil, err
+    }
+    if !validation.Check(ctx, conn.ConnectionState()) {
+      return nil, errors.New("extra validation failed")
+    }
+    return conn, nil
+  },
+}
+req, _ := http.NewRequest("GET", "https://example.com", nil)
+req = req.WithContext(validation.NewContext(req.Context(), expectedCertData))
+tr.RoundTrip(req)
+
+
+Then validation.Check would compare the server certificate in the connection state with the expectedCertData attached to the request.
