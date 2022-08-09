@@ -30,16 +30,19 @@ func TestDnsResolverAll(t *testing.T) {
 
 	for _, tt := range tests {
 		r := tt.provider()
-		rr, rrsig, err := r.Query(tt.name, tt.dnsType)
+		m, err := r.Query(tt.name, tt.dnsType)
 		if err != nil {
 			t.Fatalf("received error: %v", err.Error())
 		}
 		if tt.dnsSec {
-			if rrsig == nil {
+			if !m.IsRRSIG() {
 				t.Fatalf("RRSIG not present")
 			}
 		}
-		t.Logf("received %v", rr)
+		if len(m.GetRR()) < 1 {
+			t.Fatalf("RRS not present")
+		}
+		t.Logf("received %v", m.GetRR())
 	}
 
 	t.Logf("Success !")

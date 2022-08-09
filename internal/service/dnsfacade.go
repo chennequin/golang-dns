@@ -2,7 +2,7 @@ package service
 
 import (
 	"fmt"
-	"github.com/miekg/dns"
+	"golang-dns/internal/service/model"
 	"golang-dns/internal/transverse"
 )
 
@@ -19,34 +19,34 @@ func NewDnsFacade(resolver DnsResolver, validator DnssecValidator) DnsFacade {
 	return f
 }
 
-func (f DnsFacade) Query(name string, dnsType uint16) ([]dns.RR, error) {
+func (f DnsFacade) Query(name string, dnsType uint16) (model.DnsResponse, error) {
 
-	rr, rrsig, err := f.resolver.Query(name, dnsType)
+	r, err := f.resolver.Query(name, dnsType)
 	if err != nil {
-		return rr, err
+		return r, err
 	}
 
-	if rrsig != nil {
-		err = f.validator.VerifySig(rr, rrsig)
-		return rr, err
+	if r.IsRRSIG() {
+		err = f.validator.VerifySig(r)
+		return r, err
 	}
 
-	return rr, nil
+	return r, nil
 }
 
-func (f DnsFacade) QueryValidate(name string, dnsType uint16) ([]dns.RR, error) {
+func (f DnsFacade) QueryValidate(name string, dnsType uint16) (model.DnsResponse, error) {
 
-	rr, rrsig, err := f.resolver.Query(name, dnsType)
+	r, err := f.resolver.Query(name, dnsType)
 	if err != nil {
-		return rr, err
+		return r, err
 	}
 
-	if rrsig == nil {
-		return rr, fmt.Errorf("no signature")
+	if r.IsRRSIG() {
+		return r, fmt.Errorf("no signature")
 	}
 
-	err = f.validator.VerifySig(rr, rrsig)
-	return rr, err
+	err = f.validator.VerifySig(r)
+	return r, err
 }
 
 func (_ DnsFacade) String() string {

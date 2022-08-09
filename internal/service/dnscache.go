@@ -3,9 +3,8 @@ package service
 import (
 	"fmt"
 	"github.com/dgraph-io/ristretto"
-	"github.com/miekg/dns"
+	"golang-dns/internal/service/model"
 	"golang-dns/internal/transverse"
-	"time"
 )
 
 type DnsCache struct {
@@ -14,12 +13,13 @@ type DnsCache struct {
 }
 
 type DnsCacheEntry struct {
-	rr    []dns.RR
-	rrsig *dns.RRSIG
+	name     string
+	dnsType  uint16
+	response model.DnsResponse
 }
 
 func (e DnsCacheEntry) String() string {
-	return fmt.Sprintf("{rr:%s, rrsig:%s}", e.rr, e.rrsig)
+	return fmt.Sprintf("{m:%v}", e.response.GetMsg())
 }
 
 type DnsCacheKey string
@@ -28,10 +28,9 @@ func NewDnsCacheKey(name string, dnsType uint16) string {
 	return fmt.Sprintf("%s/%d", name, dnsType)
 }
 
-func NewDnsEntry(rr []dns.RR, rrsig *dns.RRSIG) DnsCacheEntry {
+func NewDnsCacheEntry(r model.DnsResponse) DnsCacheEntry {
 	return DnsCacheEntry{
-		rr:    rr,
-		rrsig: rrsig,
+		response: r,
 	}
 }
 
@@ -56,30 +55,20 @@ func NewDnsCache(resolver DnsResolver) DnsCache {
 	return c
 }
 
-func (s DnsCache) Query(name string, dnsType uint16) ([]dns.RR, *dns.RRSIG, error) {
-
-	rrTTL := func(rr []dns.RR) time.Duration {
-		if len(rr) > 0 {
-			return time.Duration(rr[0].Header().Ttl) * time.Second
-		}
-		return 5 * time.Minute
-	}
+func (s DnsCache) Query(name string, dnsType uint16) (model.DnsResponse, error) {
 
 	key := NewDnsCacheKey(name, dnsType)
 	value, found := s.cache.Get(key)
 	if !found {
-		rr, rrsig, err := s.resolver.Query(name, dnsType)
+		r, err := s.resolver.Query(name, dnsType)
 		if err == nil {
-			s.cache.SetWithTTL(key, NewDnsEntry(rr, rrsig), 1, rrTTL(rr))
+			s.cache.SetWithTTL(key, NewDnsCacheEntry(r), 1, r.GetTTL())
 			s.cache.Wait()
 		}
-		return rr, rrsig, err
+		return r, err
 	}
 
-	rr := value.(DnsCacheEntry).rr
-	rrsig := value.(DnsCacheEntry).rrsig
-
-	return rr, rrsig, nil
+	return value.(DnsCacheEntry).response, nil
 }
 
 func (_ DnsCache) String() string {

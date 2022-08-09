@@ -42,11 +42,21 @@ func AsDnsKeyMap(rrset []dns.RR) map[uint16]*dns.DNSKEY {
 	}
 	return dnsKeysMap
 }
-func ParentZone(zone string) string {
-	zones := strings.SplitN(zone, ".", 2)
-	if len(zones) < 2 {
-		return "FailedToFindParentZone" // must not happen
+
+func SubZone(domain string, i int) string {
+
+	if i == 0 {
+		return "."
 	}
-	parent := dns.Fqdn(zones[1])
-	return parent
+
+	arr := strings.Split(domain, ".")
+
+	builder := strings.Builder{}
+
+	for j := i; j > 0; j-- {
+		builder.WriteString(arr[len(arr)-j-1:][0])
+		builder.WriteString(".")
+	}
+
+	return builder.String()
 }

@@ -5,9 +5,9 @@ const (
 )
 
 var (
-	LogDnssec     = false
-	LogHttpsCerts = true
-	EnableTrace   = true
+	FlagLogDnssec       = false
+	FlagLogHttpsCerts   = false
+	FlagHttpEnableTrace = false
 
 	pathToCertificates = "./"
 	retry              = defaultRetryCount
@@ -22,9 +22,11 @@ func GetRetry() int {
 }
 
 func SetTest() {
-	LogHttpsCerts = false
-	EnableTrace = false
-	LogDnssec = false
+
+	FlagLogHttpsCerts = false
+	FlagHttpEnableTrace = false
+	FlagLogDnssec = false
+
 	pathToCertificates = "../../"
 	retry = 0
 }

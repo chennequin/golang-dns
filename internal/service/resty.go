@@ -15,6 +15,11 @@ type HardenedResty struct {
 	serverName string
 }
 
+type DnsHardenedResty struct {
+	client     *resty.Client
+	serverName string
+}
+
 func NewHardenedResty(serverName, rootCertificateFile string) HardenedResty {
 	var r HardenedResty
 	defer transverse.Logger().Printf("%s initialized", &r)
@@ -47,7 +52,7 @@ func newSecureClient(serverName, rootCertificateFile string) *resty.Client {
 				return nil
 			},
 			VerifyPeerCertificate: func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
-				if transverse.LogHttpsCerts {
+				if transverse.FlagLogHttpsCerts {
 					helpers.LogPeerCertificate(rawCerts, verifiedChains)
 				}
 				return nil
@@ -61,7 +66,7 @@ func newSecureClient(serverName, rootCertificateFile string) *resty.Client {
 
 	client.SetRootCertificateFromString(string(rootPemData))
 
-	if transverse.EnableTrace {
+	if transverse.FlagHttpEnableTrace {
 		client.EnableTrace()
 	}
 

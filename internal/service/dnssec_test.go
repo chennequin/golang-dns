@@ -33,30 +33,33 @@ func TestDnssecValid(t *testing.T) {
 		{"afnic.fr", dns.TypeA},
 		{"afnic.fr", dns.TypeMX},
 		{"afnic.fr", dns.TypeTXT},
+		{"_dmarc.icourrier.fr", dns.TypeTXT},
 	}
 
-	r := NewDnsResolverGoogle()
-	v := NewDnssecValidator(r, conf.TrustAnchor)
+	resolver := NewDnsResolverGoogle()
+	validator := NewDnssecValidator(resolver, conf.TrustAnchor)
 
 	for _, tt := range tests {
-		rr, rrsig, err := r.Query(tt.name, tt.dnsType)
+		r, err := resolver.Query(tt.name, tt.dnsType)
 		if err != nil {
 			t.Fatalf("received error: %v", err.Error())
 		}
-		if rr == nil {
+		if len(r.GetRR()) < 1 {
 			t.Fatalf("RR not present")
 		}
-		if rrsig == nil {
+		if r.GetRRSIG() == nil {
 			t.Fatalf("RRSIG not present")
 		}
 
-		err = v.VerifySig(rr, rrsig)
+		err = validator.VerifySig(r)
 		if err != nil {
 			t.Fatalf("received error: %v", err.Error())
 		}
 
-		t.Logf("received %v", rr)
+		t.Logf("received %v", r.GetMsg().Answer)
 	}
+
+	t.Logf("Success !")
 }
 
 func TestDnssecInvalid(t *testing.T) {
@@ -73,26 +76,28 @@ func TestDnssecInvalid(t *testing.T) {
 		{"afnic.fr", dns.TypeTXT},
 	}
 
-	r := NewDnsResolverGoogle()
-	v := NewDnssecValidator(r, FakeAnchor)
+	resolver := NewDnsResolverGoogle()
+	validator := NewDnssecValidator(resolver, FakeAnchor)
 
 	for _, tt := range tests {
-		rr, rrsig, err := r.Query(tt.name, tt.dnsType)
+		r, err := resolver.Query(tt.name, tt.dnsType)
 		if err != nil {
 			t.Fatalf("received error: %v", err.Error())
 		}
-		if rr == nil {
+		if len(r.GetRR()) < 1 {
 			t.Fatalf("RR not present")
 		}
-		if rrsig == nil {
+		if r.GetRRSIG() == nil {
 			t.Fatalf("RRSIG not present")
 		}
 
-		err = v.VerifySig(rr, rrsig)
+		err = validator.VerifySig(r)
 		if err == nil {
 			t.Fatalf("not received any error")
 		}
 
 		t.Logf("received error: %v", err.Error())
 	}
+
+	t.Logf("Success !")
 }

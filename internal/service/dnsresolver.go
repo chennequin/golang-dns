@@ -2,13 +2,15 @@ package service
 
 import (
 	"fmt"
+	"github.com/go-resty/resty/v2"
 	"github.com/miekg/dns"
-	"golang-dns/internal/helpers"
+	h "golang-dns/internal/helpers"
+	"golang-dns/internal/service/model"
 	"golang-dns/internal/transverse"
 )
 
 type DnsResolver interface {
-	Query(name string, dnsType uint16) ([]dns.RR, *dns.RRSIG, error)
+	Query(name string, dnsType uint16) (model.DnsResponse, error)
 }
 
 type DnsResolverRestyImpl struct {
@@ -24,63 +26,56 @@ func NewDnsResolverRestyImpl(client HardenedResty, url string) DnsResolver {
 	return r
 }
 
-func (s DnsResolverRestyImpl) Query(name string, dnsType uint16) ([]dns.RR, *dns.RRSIG, error) {
+func (s DnsResolverRestyImpl) Query(name string, dnsType uint16) (model.DnsResponse, error) {
+
+	m := h.Msg(name, dnsType)
+	r := model.NewDnsResponse(m)
+
 	if _, valid := dns.IsDomainName(name); !valid {
-		return nil, nil, fmt.Errorf("must provide a valid domain name")
+		return r, fmt.Errorf("must provide a valid domain name")
 	}
-	m := helpers.Msg(name, dnsType)
-	rr, rrSig, err := s.QueryRrSig(m, dnsType)
-	return rr, rrSig, err
+
+	in, err := s.packPostUnpack(m)
+	return model.NewDnsResponse(in), err
 }
 
-func (s DnsResolverRestyImpl) QueryRrSig(m *dns.Msg, dnsType uint16) ([]dns.RR, *dns.RRSIG, error) {
-
-	in, err := s.exchange(m)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	rr := helpers.CollectAll(in.Answer, dnsType)
-	rrsig := helpers.CollectOne(in.Answer, dns.TypeRRSIG)
-
-	if rrsig != nil {
-		return rr, rrsig.(*dns.RRSIG), nil
-	}
-
-	return rr, nil, nil
-}
-
-func (s DnsResolverRestyImpl) exchange(m *dns.Msg) (*dns.Msg, error) {
+func (s DnsResolverRestyImpl) packPostUnpack(m *dns.Msg) (*dns.Msg, error) {
 
 	b, err := m.Pack()
 	if err != nil {
 		return nil, fmt.Errorf("unable to pack dns.Msg")
 	}
 
-	resp, err := s.client.Client().R().
-		SetHeader("Content-Type", "application/dns-message").
-		SetBody(b).
-		Post(s.url)
+	resp, err := s.Post(b)
 	if err != nil {
 		return nil, fmt.Errorf("unable to perform query: %s", err.Error())
 	}
 
-	if transverse.EnableTrace {
-		helpers.LogTrace(resp, err)
+	if transverse.FlagHttpEnableTrace {
+		h.LogTrace(resp, err)
 	}
 
 	in := new(dns.Msg)
 	err = in.Unpack(resp.Body())
 	if err != nil {
-		return nil, fmt.Errorf("unable to unpack dns.Msg")
+		return in, fmt.Errorf("unable to unpack dns.Msg")
 	}
 
+	// this client does not handler recursive queries.
+	// reject the answer if recursion is not available on the server side.
 	if !in.MsgHdr.RecursionAvailable ||
 		in.MsgHdr.CheckingDisabled {
 		return in, fmt.Errorf("not acceptable response received %+v", in.MsgHdr)
 	}
 
 	return in, nil
+}
+
+func (s DnsResolverRestyImpl) Post(b []byte) (*resty.Response, error) {
+	return s.client.Client().R().
+		SetHeader("Content-Type", "application/dns-message").
+		SetBody(b).
+		Post(s.url)
 }
 
 func (s DnsResolverRestyImpl) String() string {

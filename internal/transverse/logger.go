@@ -12,3 +12,9 @@ var (
 func Logger() *log.Logger {
 	return logger
 }
+
+func LogDnssec(format string, params ...interface{}) {
+	if FlagLogDnssec {
+		Logger().Printf(format, params...)
+	}
+}
