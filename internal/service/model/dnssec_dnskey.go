@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"github.com/miekg/dns"
+	"strings"
 )
 
 type DnsKeyResponse struct {
@@ -37,14 +38,20 @@ func (r DnsKeyResponse) VerifyRRSIG() error {
 }
 
 // VerifyTrustAnchor compares the KSK with the specified trust anchor
-func (r DnsKeyResponse) VerifyTrustAnchor(trustAnchor *dns.DNSKEY) error {
+func (r DnsKeyResponse) VerifyTrustAnchor(anchors []KeyDigest) error {
+
 	kk := r.KSK()
-	if kk.KeyTag() != trustAnchor.KeyTag() ||
-		kk.Flags != trustAnchor.Flags ||
-		kk.Algorithm != trustAnchor.Algorithm ||
-		kk.Protocol != trustAnchor.Protocol {
-		return fmt.Errorf("keys are different")
+
+	for _, k := range anchors {
+
+		digest := strings.ToUpper(kk.ToDS(k.DigestType).Digest)
+
+		if kk.KeyTag() == k.KeyTag &&
+			kk.Algorithm == k.Algorithm &&
+			digest == k.Digest {
+			return nil
+		}
 	}
 
-	return nil
+	return fmt.Errorf("keys are different")
 }

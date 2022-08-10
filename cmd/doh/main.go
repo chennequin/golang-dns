@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/miekg/dns"
 	"golang-dns/internal/service"
-	"golang-dns/internal/service/conf"
+	"golang-dns/internal/service/model"
 	"golang-dns/internal/transverse"
 	"log"
 )
@@ -11,7 +11,7 @@ import (
 func main() {
 	resolver := service.NewDnsResolverGoogle()
 	cache := service.NewDnsCache(resolver)
-	validator := service.NewDnssecValidator(cache, conf.TrustAnchor)
+	validator := service.NewDnssecValidator(cache, model.LoadTrustAnchors())
 	facade := service.NewDnsFacade(cache, validator)
 
 	rr, err := facade.Query("_dmarc.icourrier.fr", dns.TypeTXT)

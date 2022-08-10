@@ -26,15 +26,15 @@ func NewZoneDB() ZoneDB {
 }
 
 type DnssecValidator struct {
-	resolver    DnsResolver
-	trustAnchor dns.DNSKEY
+	resolver DnsResolver
+	anchors  []model.KeyDigest
 }
 
-func NewDnssecValidator(resolver DnsResolver, trustAnchor dns.DNSKEY) DnssecValidator {
+func NewDnssecValidator(resolver DnsResolver, anchors []model.KeyDigest) DnssecValidator {
 	var v DnssecValidator
 	defer t.Logger().Printf("%s initialized", &v)
 	v.resolver = resolver
-	v.trustAnchor = trustAnchor
+	v.anchors = anchors
 	return v
 }
 
@@ -143,7 +143,7 @@ func (s DnssecValidator) TopDownVerify(deep int, domain, zone string, parentDnsK
 
 	if zone == "." {
 
-		if err := dnsKey.VerifyTrustAnchor(&s.trustAnchor); err != nil {
+		if err := dnsKey.VerifyTrustAnchor(s.anchors); err != nil {
 			return fmt.Errorf("unable to match trust anchor: %s", err.Error())
 		}
 
