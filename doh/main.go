@@ -14,7 +14,7 @@ func main() {
 	validator := service.NewDnssecValidator(cache, conf.TrustAnchor)
 	facade := service.NewDnsFacade(cache, validator)
 
-	rr, err := facade.Query("icourrier.fr", dns.TypeTXT)
+	rr, err := facade.Query("_dmarc.icourrier.fr", dns.TypeTXT)
 	if err != nil {
 		log.Fatal(err)
 	}

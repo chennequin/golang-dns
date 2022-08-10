@@ -51,7 +51,7 @@ func TestDnssecValid(t *testing.T) {
 			t.Fatalf("RRSIG not present")
 		}
 
-		err = validator.VerifySig(r)
+		err = validator.Verify(r)
 		if err != nil {
 			t.Fatalf("received error: %v", err.Error())
 		}
@@ -91,7 +91,7 @@ func TestDnssecInvalid(t *testing.T) {
 			t.Fatalf("RRSIG not present")
 		}
 
-		err = validator.VerifySig(r)
+		err = validator.Verify(r)
 		if err == nil {
 			t.Fatalf("not received any error")
 		}

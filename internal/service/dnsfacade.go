@@ -27,7 +27,7 @@ func (f DnsFacade) Query(name string, dnsType uint16) (model.DnsResponse, error)
 	}
 
 	if r.IsRRSIG() {
-		err = f.validator.VerifySig(r)
+		err = f.validator.Verify(r)
 		return r, err
 	}
 
@@ -45,7 +45,7 @@ func (f DnsFacade) QueryValidate(name string, dnsType uint16) (model.DnsResponse
 		return r, fmt.Errorf("no signature")
 	}
 
-	err = f.validator.VerifySig(r)
+	err = f.validator.Verify(r)
 	return r, err
 }
 

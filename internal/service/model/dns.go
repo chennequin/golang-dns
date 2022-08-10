@@ -41,10 +41,6 @@ func (r DnsResponse) GetRR() []dns.RR {
 	return h.CollectAll(r.m.Answer, r.GetDnsType())
 }
 
-func (r DnsResponse) GetFRR(dnsType uint16) []dns.RR {
-	return h.CollectAll(r.m.Answer, dnsType)
-}
-
 func (r DnsResponse) GetDNSKEY() []dns.RR {
 	return h.CollectAll(r.m.Answer, dns.TypeDNSKEY)
 }
@@ -65,4 +61,12 @@ func (r DnsResponse) GetDS() *dns.DS {
 
 func (r DnsResponse) IsRRSIG() bool {
 	return r.GetRRSIG() != nil
+}
+
+func (r DnsResponse) AsDS() DsResponse {
+	return NewDnsDsResponse(r.m)
+}
+
+func (r DnsResponse) AsDNSKEY() DnsKeyResponse {
+	return NewDnsKeyResponse(r.m)
 }
