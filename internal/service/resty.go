@@ -7,7 +7,6 @@ import (
 	"github.com/go-resty/resty/v2"
 	h "golang-dns/internal/helpers"
 	t "golang-dns/internal/transverse"
-	"io/ioutil"
 )
 
 type HardenedResty struct {
@@ -20,15 +19,15 @@ type DnsHardenedResty struct {
 	serverName string
 }
 
-func NewHardenedResty(serverName, rootCertificateFile string) HardenedResty {
+func NewHardenedResty(serverName, rootCertPemFile string) HardenedResty {
 	var r HardenedResty
 	defer t.Logger().Printf("%s initialized", &r)
-	r.client = newSecureClient(serverName, rootCertificateFile)
+	r.client = newSecureClient(serverName, rootCertPemFile)
 	r.serverName = serverName
 	return r
 }
 
-func newSecureClient(serverName, rootCertificateFile string) *resty.Client {
+func newSecureClient(serverName, rootCertPemFile string) *resty.Client {
 	client := resty.New().
 		SetRetryCount(t.GetRetry()).
 		SetRedirectPolicy(resty.NoRedirectPolicy()).
@@ -59,12 +58,7 @@ func newSecureClient(serverName, rootCertificateFile string) *resty.Client {
 			},
 		})
 
-	rootPemData, err := ioutil.ReadFile(rootCertificateFile)
-	if err != nil {
-		t.Logger().Fatalf("PEM file not found: %s", err.Error())
-	}
-
-	client.SetRootCertificateFromString(string(rootPemData))
+	client.SetRootCertificateFromString(rootCertPemFile)
 
 	if t.FlagHttpEnableTrace {
 		client.EnableTrace()

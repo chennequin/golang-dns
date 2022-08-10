@@ -9,13 +9,8 @@ var (
 	FlagLogHttpsCerts   = false
 	FlagHttpEnableTrace = false
 
-	pathToCertificates = "./"
-	retry              = defaultRetryCount
+	retry = defaultRetryCount
 )
-
-func GetPath() string {
-	return pathToCertificates
-}
 
 func GetRetry() int {
 	return retry
@@ -27,6 +22,5 @@ func SetTest() {
 	FlagHttpEnableTrace = false
 	FlagLogDnssec = false
 
-	pathToCertificates = "../../"
 	retry = 0
 }

@@ -2,13 +2,14 @@ package main
 
 import (
 	"github.com/miekg/dns"
+	"golang-dns/internal/providers"
 	"golang-dns/internal/service"
 	"golang-dns/internal/transverse"
 	"log"
 )
 
 func main() {
-	resolver := service.NewDnsResolverGoogle()
+	resolver := providers.NewDnsResolverGoogle()
 	cache := service.NewDnsCache(resolver)
 	validator := service.NewDnssecValidator(cache)
 	facade := service.NewDnsFacade(cache, validator)

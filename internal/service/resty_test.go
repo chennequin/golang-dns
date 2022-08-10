@@ -2,17 +2,22 @@ package service
 
 import (
 	"github.com/go-resty/resty/v2"
+	"golang-dns/internal/service/conf"
 	"golang-dns/internal/transverse"
 	"net/http"
 	"strings"
 	"testing"
 )
 
+func NewResty() HardenedResty {
+	return NewHardenedResty("dns.google", conf.GoogleCertFile)
+}
+
 func TestHardenedResty(t *testing.T) {
 
 	transverse.SetTest()
 
-	r := NewRestyGoogle()
+	r := NewResty()
 	var resp *resty.Response
 	var err error
 

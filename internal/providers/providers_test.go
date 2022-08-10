@@ -1,9 +1,10 @@
-package service
+package providers
 
 import (
 	"github.com/go-resty/resty/v2"
 	"golang-dns/internal/transverse"
 	"net/http"
+	"strings"
 	"testing"
 )
 
@@ -58,4 +59,22 @@ func TestRestyAll(t *testing.T) {
 	}
 
 	t.Logf("Success !")
+}
+
+func ValidateResponseOk(t *testing.T, resp *resty.Response, err error, status int) {
+	if err != nil {
+		t.Fatalf("got error %v", err.Error())
+	}
+	if resp.StatusCode() != status {
+		t.Fatalf("got response status %v", resp.Status())
+	}
+}
+
+func ValidateRespBadCert(t *testing.T, resp *resty.Response, err error, expected string) {
+	if len(resp.Body()) != 0 {
+		t.Fatalf("response is not empty: %v", resp)
+	}
+	if err == nil || !strings.Contains(err.Error(), expected) {
+		t.Fatalf("expect 'certificate name does not match' error")
+	}
 }

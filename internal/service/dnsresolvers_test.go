@@ -11,21 +11,21 @@ func TestDnsResolverAll(t *testing.T) {
 	transverse.SetTest()
 
 	tests := []struct {
-		provider DnsResolverProvider
+		provider func() DnsResolver
 		name     string
 		dnsType  uint16
 		dnsSec   bool
 	}{
-		{NewDnsResolverGoogle, "gmail.com", dns.TypeSOA, false},
-		{NewDnsResolverGoogle, "gmail.com", dns.TypeA, false},
-		{NewDnsResolverGoogle, "gmail.com", dns.TypeMX, false},
-		{NewDnsResolverGoogle, "gmail.com", dns.TypeTXT, false},
-		{NewDnsResolverGoogle, "_dmarc.gmail.com", dns.TypeTXT, false},
-		{NewDnsResolverGoogle, "icourrier.fr", dns.TypeSOA, true},
-		{NewDnsResolverGoogle, "icourrier.fr", dns.TypeA, true},
-		{NewDnsResolverGoogle, "icourrier.fr", dns.TypeMX, true},
-		{NewDnsResolverGoogle, "icourrier.fr", dns.TypeTXT, true},
-		{NewDnsResolverGoogle, "_dmarc.icourrier.fr", dns.TypeTXT, true},
+		{NewDnsResolver, "gmail.com", dns.TypeSOA, false},
+		{NewDnsResolver, "gmail.com", dns.TypeA, false},
+		{NewDnsResolver, "gmail.com", dns.TypeMX, false},
+		{NewDnsResolver, "gmail.com", dns.TypeTXT, false},
+		{NewDnsResolver, "_dmarc.gmail.com", dns.TypeTXT, false},
+		{NewDnsResolver, "icourrier.fr", dns.TypeSOA, true},
+		{NewDnsResolver, "icourrier.fr", dns.TypeA, true},
+		{NewDnsResolver, "icourrier.fr", dns.TypeMX, true},
+		{NewDnsResolver, "icourrier.fr", dns.TypeTXT, true},
+		{NewDnsResolver, "_dmarc.icourrier.fr", dns.TypeTXT, true},
 	}
 
 	for _, tt := range tests {

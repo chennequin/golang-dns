@@ -3,12 +3,17 @@ package service
 import (
 	_ "embed"
 	"github.com/miekg/dns"
+	"golang-dns/internal/service/conf"
 	"golang-dns/internal/transverse"
 	"testing"
 )
 
 //go:embed conf/dns/fake-anchors.xml
 var FakeAnchorsFile string
+
+func NewDnsResolver() DnsResolver {
+	return NewDnsResolverRestyImpl(NewHardenedResty("dns.google", conf.GoogleCertFile), "https://8.8.8.8/dns-query")
+}
 
 func TestDnssecValid(t *testing.T) {
 
@@ -25,7 +30,7 @@ func TestDnssecValid(t *testing.T) {
 		{"_dmarc.icourrier.fr", dns.TypeTXT},
 	}
 
-	resolver := NewDnsResolverGoogle()
+	resolver := NewDnsResolver()
 	validator := NewDnssecValidator(resolver)
 
 	for _, tt := range tests {
@@ -65,7 +70,7 @@ func TestDnssecInvalid(t *testing.T) {
 		{"afnic.fr", dns.TypeTXT},
 	}
 
-	resolver := NewDnsResolverGoogle()
+	resolver := NewDnsResolver()
 	validator := NewDnssecValidatorFromIanaFile(resolver, LoadIanaFile(FakeAnchorsFile))
 
 	for _, tt := range tests {

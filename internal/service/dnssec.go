@@ -32,7 +32,7 @@ type DnssecValidator struct {
 }
 
 func NewDnssecValidator(resolver DnsResolver) DnssecValidator {
-	return NewDnssecValidatorFromIanaFile(resolver, LoadIanaFile(conf.IanaFile()))
+	return NewDnssecValidatorFromIanaFile(resolver, LoadIanaFile(conf.IanaFile))
 }
 
 func NewDnssecValidatorFromIanaFile(resolver DnsResolver, anchors []model.IanaKeyDigest) DnssecValidator {
