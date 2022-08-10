@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/miekg/dns"
 	h "golang-dns/internal/helpers"
+	"golang-dns/internal/service/conf"
 	"golang-dns/internal/service/model"
 	t "golang-dns/internal/transverse"
 	"sync"
@@ -27,10 +28,14 @@ func NewZoneDB() ZoneDB {
 
 type DnssecValidator struct {
 	resolver DnsResolver
-	anchors  []model.KeyDigest
+	anchors  []model.IanaKeyDigest
 }
 
-func NewDnssecValidator(resolver DnsResolver, anchors []model.KeyDigest) DnssecValidator {
+func NewDnssecValidator(resolver DnsResolver) DnssecValidator {
+	return NewDnssecValidatorFromIanaFile(resolver, LoadIanaFile(conf.IanaFile()))
+}
+
+func NewDnssecValidatorFromIanaFile(resolver DnsResolver, anchors []model.IanaKeyDigest) DnssecValidator {
 	var v DnssecValidator
 	defer t.Logger().Printf("%s initialized", &v)
 	v.resolver = resolver

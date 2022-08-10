@@ -7,6 +7,6 @@ import (
 //go:embed dns/root-anchors.xml
 var rootAnchorsFile string
 
-func TrustAnchorFile() string {
+func IanaFile() string {
 	return rootAnchorsFile
 }

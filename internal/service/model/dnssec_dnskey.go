@@ -38,7 +38,7 @@ func (r DnsKeyResponse) VerifyRRSIG() error {
 }
 
 // VerifyTrustAnchor compares the KSK with the specified trust anchor
-func (r DnsKeyResponse) VerifyTrustAnchor(anchors []KeyDigest) error {
+func (r DnsKeyResponse) VerifyTrustAnchor(anchors []IanaKeyDigest) error {
 
 	kk := r.KSK()
 

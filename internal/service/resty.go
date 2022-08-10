@@ -5,8 +5,8 @@ import (
 	"crypto/x509"
 	"fmt"
 	"github.com/go-resty/resty/v2"
-	"golang-dns/internal/helpers"
-	"golang-dns/internal/transverse"
+	h "golang-dns/internal/helpers"
+	t "golang-dns/internal/transverse"
 	"io/ioutil"
 )
 
@@ -22,7 +22,7 @@ type DnsHardenedResty struct {
 
 func NewHardenedResty(serverName, rootCertificateFile string) HardenedResty {
 	var r HardenedResty
-	defer transverse.Logger().Printf("%s initialized", &r)
+	defer t.Logger().Printf("%s initialized", &r)
 	r.client = newSecureClient(serverName, rootCertificateFile)
 	r.serverName = serverName
 	return r
@@ -30,7 +30,7 @@ func NewHardenedResty(serverName, rootCertificateFile string) HardenedResty {
 
 func newSecureClient(serverName, rootCertificateFile string) *resty.Client {
 	client := resty.New().
-		SetRetryCount(transverse.GetRetry()).
+		SetRetryCount(t.GetRetry()).
 		SetRedirectPolicy(resty.NoRedirectPolicy()).
 		SetTLSClientConfig(&tls.Config{
 			ServerName:             serverName,
@@ -39,12 +39,12 @@ func newSecureClient(serverName, rootCertificateFile string) *resty.Client {
 			InsecureSkipVerify:     false,
 			VerifyConnection: func(state tls.ConnectionState) error {
 
-				if err := helpers.VerifyConnection(serverName, state); err != nil {
+				if err := h.VerifyConnection(serverName, state); err != nil {
 					return err
 				}
 
 				if state.OCSPResponse != nil {
-					if err := helpers.VerifyOcsp(state); err != nil {
+					if err := h.VerifyOcsp(state); err != nil {
 						return err
 					}
 				}
@@ -52,8 +52,8 @@ func newSecureClient(serverName, rootCertificateFile string) *resty.Client {
 				return nil
 			},
 			VerifyPeerCertificate: func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
-				if transverse.FlagLogHttpsCerts {
-					helpers.LogPeerCertificate(rawCerts, verifiedChains)
+				if t.FlagLogHttpsCerts {
+					h.LogPeerCertificate(rawCerts, verifiedChains)
 				}
 				return nil
 			},
@@ -61,12 +61,12 @@ func newSecureClient(serverName, rootCertificateFile string) *resty.Client {
 
 	rootPemData, err := ioutil.ReadFile(rootCertificateFile)
 	if err != nil {
-		transverse.Logger().Fatalf("PEM file not found: %s", err.Error())
+		t.Logger().Fatalf("PEM file not found: %s", err.Error())
 	}
 
 	client.SetRootCertificateFromString(string(rootPemData))
 
-	if transverse.FlagHttpEnableTrace {
+	if t.FlagHttpEnableTrace {
 		client.EnableTrace()
 	}
 

@@ -6,26 +6,26 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/go-resty/resty/v2"
-	"golang-dns/internal/transverse"
+	t "golang-dns/internal/transverse"
 )
 
 func LogPeerCertificate(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) {
-	transverse.Logger().Println("***************************")
+	t.Logger().Println("***************************")
 	for _, chain := range verifiedChains {
 		for _, cert := range chain {
-			transverse.Logger().Println("-----BEGIN CERTIFICATE-----")
-			transverse.Logger().Println(fmt.Sprintf("DNSNames: %v", cert.DNSNames))
-			transverse.Logger().Println(fmt.Sprintf("IPAddresses: %v", cert.IPAddresses))
-			transverse.Logger().Println(fmt.Sprintf("IssuingCertificateURL: %v", cert.IssuingCertificateURL))
-			transverse.Logger().Println(fmt.Sprintf("OCSPServer: %v", cert.OCSPServer))
-			transverse.Logger().Println(fmt.Sprintf("Issuer: %v", cert.Issuer))
-			transverse.Logger().Println(fmt.Sprintf("Subject: %v", cert.Subject))
-			transverse.Logger().Println(fmt.Sprintf("NotBefore: %v", cert.NotBefore))
-			transverse.Logger().Println(fmt.Sprintf("NotAfter: %v", cert.NotAfter))
-			transverse.Logger().Println("-----END CERTIFICATE-----")
+			t.Logger().Println("-----BEGIN CERTIFICATE-----")
+			t.Logger().Println(fmt.Sprintf("DNSNames: %v", cert.DNSNames))
+			t.Logger().Println(fmt.Sprintf("IPAddresses: %v", cert.IPAddresses))
+			t.Logger().Println(fmt.Sprintf("IssuingCertificateURL: %v", cert.IssuingCertificateURL))
+			t.Logger().Println(fmt.Sprintf("OCSPServer: %v", cert.OCSPServer))
+			t.Logger().Println(fmt.Sprintf("Issuer: %v", cert.Issuer))
+			t.Logger().Println(fmt.Sprintf("Subject: %v", cert.Subject))
+			t.Logger().Println(fmt.Sprintf("NotBefore: %v", cert.NotBefore))
+			t.Logger().Println(fmt.Sprintf("NotAfter: %v", cert.NotAfter))
+			t.Logger().Println("-----END CERTIFICATE-----")
 		}
 	}
-	transverse.Logger().Println("***************************")
+	t.Logger().Println("***************************")
 }
 
 func LogTrace(resp *resty.Response, err error) {
@@ -68,7 +68,7 @@ func VerifyCipherSuite(cipherSuite uint16) error {
 	for _, cs := range tls.CipherSuites() {
 		if cs.ID == cipherSuite {
 			if len(cs.SupportedVersions) == 1 && cs.SupportedVersions[0] == tls.VersionTLS13 {
-				transverse.Logger().Printf("using cipher suite %s\n", cs.Name)
+				t.Logger().Printf("using cipher suite %s\n", cs.Name)
 				return nil
 			}
 		}

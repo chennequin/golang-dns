@@ -3,7 +3,6 @@ package service
 import (
 	_ "embed"
 	"github.com/miekg/dns"
-	"golang-dns/internal/service/model"
 	"golang-dns/internal/transverse"
 	"testing"
 )
@@ -27,7 +26,7 @@ func TestDnssecValid(t *testing.T) {
 	}
 
 	resolver := NewDnsResolverGoogle()
-	validator := NewDnssecValidator(resolver, model.LoadTrustAnchors())
+	validator := NewDnssecValidator(resolver)
 
 	for _, tt := range tests {
 		r, err := resolver.Query(tt.name, tt.dnsType)
@@ -67,7 +66,7 @@ func TestDnssecInvalid(t *testing.T) {
 	}
 
 	resolver := NewDnsResolverGoogle()
-	validator := NewDnssecValidator(resolver, model.LoadTrustAnchorFromFile(FakeAnchorsFile))
+	validator := NewDnssecValidatorFromIanaFile(resolver, LoadIanaFile(FakeAnchorsFile))
 
 	for _, tt := range tests {
 		r, err := resolver.Query(tt.name, tt.dnsType)
