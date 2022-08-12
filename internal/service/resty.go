@@ -14,17 +14,12 @@ type HardenedResty struct {
 	serverName string
 }
 
-type DnsHardenedResty struct {
-	client     *resty.Client
-	serverName string
-}
-
 func NewHardenedResty(serverName, rootCertPemFile string) HardenedResty {
-	var r HardenedResty
-	defer t.Logger().Printf("%s initialized", &r)
-	r.client = newSecureClient(serverName, rootCertPemFile)
-	r.serverName = serverName
-	return r
+	var rt HardenedResty
+	defer t.Logger().Printf("%s initialized", &rt)
+	rt.client = newSecureClient(serverName, rootCertPemFile)
+	rt.serverName = serverName
+	return rt
 }
 
 func newSecureClient(serverName, rootCertPemFile string) *resty.Client {
@@ -67,10 +62,10 @@ func newSecureClient(serverName, rootCertPemFile string) *resty.Client {
 	return client
 }
 
-func (r HardenedResty) Client() *resty.Client {
-	return r.client
+func (rt HardenedResty) Client() *resty.Client {
+	return rt.client
 }
 
-func (r HardenedResty) String() string {
-	return fmt.Sprintf("HardenedResty name=\"%s\" + rootCertificate", r.serverName)
+func (rt HardenedResty) String() string {
+	return fmt.Sprintf("HardenedResty name=\"%s\" + rootCertificate", rt.serverName)
 }

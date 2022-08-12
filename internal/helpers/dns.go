@@ -54,7 +54,11 @@ func SubZone(domain string, i int) string {
 	builder := strings.Builder{}
 
 	for j := i; j > 0; j-- {
-		builder.WriteString(arr[len(arr)-j-1:][0])
+		begin := len(arr) - j - 1
+		if begin < 0 {
+			return "" // sub-zone does not exists
+		}
+		builder.WriteString(arr[begin:][0])
 		builder.WriteString(".")
 	}
 

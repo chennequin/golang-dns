@@ -12,7 +12,7 @@ func main() {
 	resolver := providers.NewDnsResolverGoogle()
 	cache := service.NewDnsCache(resolver)
 	validator := service.NewDnssecValidator(cache)
-	facade := service.NewDnsFacade(cache, validator)
+	facade := service.NewDnssecResolver(cache, validator)
 
 	rr, err := facade.Query("_dmarc.icourrier.fr", dns.TypeTXT)
 	if err != nil {

@@ -3,7 +3,6 @@ package model
 import (
 	"fmt"
 	"github.com/miekg/dns"
-	"strings"
 )
 
 type DnsKeyResponse struct {
@@ -30,11 +29,7 @@ func (r DnsKeyResponse) ByKeyTag(keyTag uint16) *dns.DNSKEY {
 }
 
 func (r DnsKeyResponse) VerifyRRSIG() error {
-	ksk := r.KSK()
-	if err := r.VerifySig(ksk); err != nil {
-		return fmt.Errorf("invalid signature: %s", err.Error())
-	}
-	return nil
+	return r.VerifySig(r.KSK())
 }
 
 // VerifyTrustAnchor compares the KSK with the specified trust anchor
@@ -43,12 +38,7 @@ func (r DnsKeyResponse) VerifyTrustAnchor(anchors []IanaKeyDigest) error {
 	kk := r.KSK()
 
 	for _, k := range anchors {
-
-		digest := strings.ToUpper(kk.ToDS(k.DigestType).Digest)
-
-		if kk.KeyTag() == k.KeyTag &&
-			kk.Algorithm == k.Algorithm &&
-			digest == k.Digest {
+		if err := CompareDsDigest(kk, k.DigestType, k.Digest); err == nil {
 			return nil
 		}
 	}

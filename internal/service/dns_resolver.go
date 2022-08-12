@@ -5,28 +5,31 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/miekg/dns"
 	h "golang-dns/internal/helpers"
-	"golang-dns/internal/service/model"
+	"golang-dns/internal/model"
 	"golang-dns/internal/transverse"
 )
 
 type DnsResolver interface {
 	Query(name string, dnsType uint16) (model.DnsResponse, error)
+	AsAsync() AsyncDnsResolver
 }
 
 type DnsResolverRestyImpl struct {
+	DnsResolverBase
 	client HardenedResty
 	url    string
 }
 
 func NewDnsResolverRestyImpl(client HardenedResty, url string) DnsResolver {
-	var r DnsResolverRestyImpl
-	defer transverse.Logger().Printf("%s initialized", &r)
-	r.client = client
-	r.url = url
-	return r
+	var rsv DnsResolverRestyImpl
+	defer transverse.Logger().Printf("%s initialized", &rsv)
+	defer rsv.initDnsResolverBase(&rsv)
+	rsv.client = client
+	rsv.url = url
+	return rsv
 }
 
-func (s DnsResolverRestyImpl) Query(name string, dnsType uint16) (model.DnsResponse, error) {
+func (rsv DnsResolverRestyImpl) Query(name string, dnsType uint16) (model.DnsResponse, error) {
 
 	m := h.Msg(name, dnsType)
 	r := model.NewDnsResponse(m)
@@ -35,18 +38,18 @@ func (s DnsResolverRestyImpl) Query(name string, dnsType uint16) (model.DnsRespo
 		return r, fmt.Errorf("must provide a valid domain name")
 	}
 
-	in, err := s.packPostUnpack(m)
+	in, err := rsv.packPostUnpack(m)
 	return model.NewDnsResponse(in), err
 }
 
-func (s DnsResolverRestyImpl) packPostUnpack(m *dns.Msg) (*dns.Msg, error) {
+func (rsv DnsResolverRestyImpl) packPostUnpack(m *dns.Msg) (*dns.Msg, error) {
 
 	b, err := m.Pack()
 	if err != nil {
 		return nil, fmt.Errorf("unable to pack dns.Msg")
 	}
 
-	resp, err := s.Post(b)
+	resp, err := rsv.Post(b)
 	if err != nil {
 		return nil, fmt.Errorf("unable to perform query: %s", err.Error())
 	}
@@ -71,13 +74,13 @@ func (s DnsResolverRestyImpl) packPostUnpack(m *dns.Msg) (*dns.Msg, error) {
 	return in, nil
 }
 
-func (s DnsResolverRestyImpl) Post(b []byte) (*resty.Response, error) {
-	return s.client.Client().R().
+func (rsv DnsResolverRestyImpl) Post(b []byte) (*resty.Response, error) {
+	return rsv.client.Client().R().
 		SetHeader("Content-Type", "application/dns-message").
 		SetBody(b).
-		Post(s.url)
+		Post(rsv.url)
 }
 
-func (s DnsResolverRestyImpl) String() string {
-	return fmt.Sprintf("DnsResolverRestyImpl %s", s.url)
+func (rsv DnsResolverRestyImpl) String() string {
+	return fmt.Sprintf("DnsResolverRestyImpl %s", rsv.url)
 }

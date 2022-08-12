@@ -3,11 +3,12 @@ package service
 import (
 	"fmt"
 	"github.com/dgraph-io/ristretto"
-	"golang-dns/internal/service/model"
+	"golang-dns/internal/model"
 	"golang-dns/internal/transverse"
 )
 
 type DnsCache struct {
+	DnsResolverBase
 	resolver DnsResolver
 	cache    *ristretto.Cache
 }
@@ -36,9 +37,10 @@ func NewDnsCacheEntry(r model.DnsResponse) DnsCacheEntry {
 
 func NewDnsCache(resolver DnsResolver) DnsCache {
 
-	var c DnsCache
+	var rsv DnsCache
 
-	defer transverse.Logger().Printf("%s initialized", &c)
+	defer transverse.Logger().Printf("%s initialized", &rsv)
+	defer rsv.initDnsResolverBase(&rsv)
 
 	cache, err := ristretto.NewCache(&ristretto.Config{
 		NumCounters: 1000, // number of keys to track frequency of.
@@ -49,21 +51,21 @@ func NewDnsCache(resolver DnsResolver) DnsCache {
 		transverse.Logger().Fatal(err)
 	}
 
-	c.resolver = resolver
-	c.cache = cache
+	rsv.resolver = resolver
+	rsv.cache = cache
 
-	return c
+	return rsv
 }
 
-func (s DnsCache) Query(name string, dnsType uint16) (model.DnsResponse, error) {
+func (rsv DnsCache) Query(name string, dnsType uint16) (model.DnsResponse, error) {
 
 	key := NewDnsCacheKey(name, dnsType)
-	value, found := s.cache.Get(key)
+	value, found := rsv.cache.Get(key)
 	if !found {
-		r, err := s.resolver.Query(name, dnsType)
+		r, err := rsv.resolver.Query(name, dnsType)
 		if err == nil {
-			s.cache.SetWithTTL(key, NewDnsCacheEntry(r), 1, r.GetTTL())
-			s.cache.Wait()
+			rsv.cache.SetWithTTL(key, NewDnsCacheEntry(r), 1, r.GetTTL())
+			rsv.cache.Wait()
 		}
 		return r, err
 	}

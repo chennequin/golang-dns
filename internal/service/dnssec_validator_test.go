@@ -11,7 +11,7 @@ import (
 //go:embed conf/dns/fake-anchors.xml
 var FakeAnchorsFile string
 
-func NewDnsResolver() DnsResolver {
+func NewDnsSecResolver() DnsResolver {
 	return NewDnsResolverRestyImpl(NewHardenedResty("dns.google", conf.GoogleCertFile), "https://8.8.8.8/dns-query")
 }
 
@@ -30,7 +30,7 @@ func TestDnssecValid(t *testing.T) {
 		{"_dmarc.icourrier.fr", dns.TypeTXT},
 	}
 
-	resolver := NewDnsResolver()
+	resolver := NewDnsSecResolver()
 	validator := NewDnssecValidator(resolver)
 
 	for _, tt := range tests {
@@ -70,7 +70,7 @@ func TestDnssecInvalid(t *testing.T) {
 		{"afnic.fr", dns.TypeTXT},
 	}
 
-	resolver := NewDnsResolver()
+	resolver := NewDnsSecResolver()
 	validator := NewDnssecValidatorFromIanaFile(resolver, LoadIanaFile(FakeAnchorsFile))
 
 	for _, tt := range tests {

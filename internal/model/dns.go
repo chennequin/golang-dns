@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"github.com/miekg/dns"
 	h "golang-dns/internal/helpers"
 	"time"
@@ -63,10 +64,18 @@ func (r DnsResponse) IsRRSIG() bool {
 	return r.GetRRSIG() != nil
 }
 
-func (r DnsResponse) AsDS() DsResponse {
+func (r DnsResponse) IsEmpty() bool {
+	return r.m.Answer == nil
+}
+
+func (r DnsResponse) AsDsResponse() DsResponse {
 	return NewDnsDsResponse(r.m)
 }
 
-func (r DnsResponse) AsDNSKEY() DnsKeyResponse {
+func (r DnsResponse) AsDnsKeyResponse() DnsKeyResponse {
 	return NewDnsKeyResponse(r.m)
+}
+
+func (r DnsResponse) String() string {
+	return fmt.Sprintf("AsyncDnsResponse: %s", r.m)
 }

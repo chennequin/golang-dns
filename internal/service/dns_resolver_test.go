@@ -2,9 +2,14 @@ package service
 
 import (
 	"github.com/miekg/dns"
+	"golang-dns/internal/service/conf"
 	"golang-dns/internal/transverse"
 	"testing"
 )
+
+func NewDnsResolver() DnsResolver {
+	return NewDnsResolverRestyImpl(NewHardenedResty("dns.google", conf.GoogleCertFile), "https://8.8.8.8/dns-query")
+}
 
 func TestDnsResolverAll(t *testing.T) {
 

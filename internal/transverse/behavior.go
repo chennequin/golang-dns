@@ -1,11 +1,11 @@
 package transverse
 
 const (
-	defaultRetryCount = 2
+	defaultRetryCount = 1
 )
 
 var (
-	FlagLogDnssec       = false
+	FlagLogDnssec       = true
 	FlagLogHttpsCerts   = false
 	FlagHttpEnableTrace = false
 

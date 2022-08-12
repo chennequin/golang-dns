@@ -50,6 +50,6 @@ func ValidateRespBadCert(t *testing.T, resp *resty.Response, err error, expected
 		t.Fatalf("response is not empty: %v", resp)
 	}
 	if err == nil || !strings.Contains(err.Error(), expected) {
-		t.Fatalf("expect 'certificate name does not match' error")
+		t.Fatalf("expect 'certificate' error")
 	}
 }

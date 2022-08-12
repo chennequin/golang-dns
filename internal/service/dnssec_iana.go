@@ -2,7 +2,7 @@ package service
 
 import (
 	"encoding/xml"
-	"golang-dns/internal/service/model"
+	"golang-dns/internal/model"
 	"log"
 	"time"
 )

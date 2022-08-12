@@ -10,8 +10,12 @@ import (
 
 func TestRestyAll(t *testing.T) {
 
+	//TODO:  verify all resty from pools
+
 	transverse.SetTest()
 
+	// TODO replace those tests with a dns resolver instead
+	// thus avoiding using http.StatusBadRequest or http.StatusNotFound
 	tests := []struct {
 		provider RestProvider
 		url      string
@@ -75,6 +79,6 @@ func ValidateRespBadCert(t *testing.T, resp *resty.Response, err error, expected
 		t.Fatalf("response is not empty: %v", resp)
 	}
 	if err == nil || !strings.Contains(err.Error(), expected) {
-		t.Fatalf("expect 'certificate name does not match' error")
+		t.Fatalf("expect 'certificate' error")
 	}
 }

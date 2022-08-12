@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"strings"
+	"time"
 )
 
 const (
@@ -39,6 +40,9 @@ const (
 // Download DNSSEC Trust Anchors files from iana.org website.
 // Download root certificates for all implemented DNS resolvers.
 func main() {
+
+	//TODO filter trust anchors here by date and generate a new file, keep only the hash
+	//validate dns call with that new setting (using clock of this computer)
 
 	type DigestAssertion struct {
 		expect string
@@ -74,6 +78,7 @@ func main() {
 	}
 
 	log.Println("FILES ARE VALID")
+	log.Println(fmt.Sprintf("time is %s", time.Now()))
 }
 
 func fingerPrint(sha string) string {
