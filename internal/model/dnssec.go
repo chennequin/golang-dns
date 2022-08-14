@@ -36,21 +36,3 @@ func (r DnsResponse) VerifySig(ksk *dns.DNSKEY) error {
 
 	return nil
 }
-
-// FindVerifySig verifies that the given RRSET, RRSIG has a valid signature against the specified key set.
-// returns true if a signing key has been found, false otherwise.
-func (r DnsResponse) FindVerifySig(k *DnsKeyResponse) (bool, error) {
-
-	rrsig := r.GetRRSIG()
-	sk := k.ByKeyTag(rrsig.KeyTag)
-
-	if sk != nil {
-
-		if err := r.VerifySig(sk); err != nil {
-			return true, fmt.Errorf("invalid RR/RRSIG: %s", err.Error())
-		}
-		return true, nil
-	}
-
-	return false, nil
-}

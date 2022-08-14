@@ -16,7 +16,6 @@ func NewDnsDsResponse(m *dns.Msg) DsResponse {
 
 // VerifyRRSIG verifies DS signature given the specified key
 func (r DsResponse) VerifyRRSIG(keyResponse *DnsKeyResponse) error {
-
 	rrk := keyResponse.ByKeyTag(r.GetRRSIG().KeyTag) // key which signed DS in parent zone
 	return r.VerifySig(rrk)
 }
