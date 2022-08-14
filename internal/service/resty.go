@@ -69,3 +69,15 @@ func (rt HardenedResty) Client() *resty.Client {
 func (rt HardenedResty) String() string {
 	return fmt.Sprintf("HardenedResty name=\"%s\" + rootCertificate", rt.serverName)
 }
+
+//TODO
+// Resolver optionally specifies an alternate resolver to use.
+//Resolver *Resolver
+
+// If Control is not nil, it is called after creating the network
+// connection but before actually dialing.
+//
+// Network and address parameters passed to Control method are not
+// necessarily the ones passed to Dial. For example, passing "tcp" to Dial
+// will cause the Control function to be called with "tcp4" or "tcp6".
+//Control func(network, address string, c syscall.RawConn) error

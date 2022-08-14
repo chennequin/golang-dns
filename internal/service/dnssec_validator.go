@@ -16,14 +16,14 @@ const (
 type DnssecValidator struct {
 	resolver      DnsResolver
 	asyncResolver AsyncDnsResolver
-	anchors       []model.IanaKeyDigest
+	anchors       model.IanaAnchors
 }
 
 func NewDnssecValidator(resolver DnsResolver) DnssecValidator {
 	return NewDnssecValidatorFromIanaFile(resolver, LoadIanaFile(conf.IanaFile))
 }
 
-func NewDnssecValidatorFromIanaFile(resolver DnsResolver, anchors []model.IanaKeyDigest) DnssecValidator {
+func NewDnssecValidatorFromIanaFile(resolver DnsResolver, anchors model.IanaAnchors) DnssecValidator {
 	var v DnssecValidator
 	defer t.Logger().Printf("%s initialized", &v)
 	v.resolver = resolver
@@ -102,7 +102,7 @@ func (recursion DnssecRecursion) PopVerify(r model.DnsResponse) error {
 		dnsKeyResp := keyResult.AsDnsKeyResponse()
 		dsResp := dsResult.AsDsResponse()
 
-		err = recursion.ValidateZone(zone.zone, &dnsKeyResp, &dsResp, previousDnsKeyResponse, recursion.validator.anchors)
+		err = recursion.ValidateZone(zone.zone, &dnsKeyResp, &dsResp, previousDnsKeyResponse, recursion.validator.anchors.KeyDigest)
 		if err != nil {
 			return err
 		}

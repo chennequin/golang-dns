@@ -28,7 +28,7 @@ type DnsResolverParam struct {
 	Url        string
 }
 
-var pool = []DnsResolverParam{
+var globalPool = []DnsResolverParam{
 	{ServerNameGoogle, conf.GoogleCertFile, DnsUrlGoogleA},
 	{ServerNameGoogle, conf.GoogleCertFile, DnsUrlGoogleB},
 	{ServerNameCloudFlare, conf.DigiCertCertFile, DnsUrlCloudFlareA},
@@ -36,34 +36,34 @@ var pool = []DnsResolverParam{
 	{ServerNameQuad9, conf.DigiCertCertFile, DnsUrlQuad9},
 }
 
-var google = []DnsResolverParam{
+var googlePool = []DnsResolverParam{
 	{ServerNameGoogle, conf.GoogleCertFile, DnsUrlGoogleA},
 	{ServerNameGoogle, conf.GoogleCertFile, DnsUrlGoogleB},
 }
 
-var cloudFlare = []DnsResolverParam{
+var cloudFlarePool = []DnsResolverParam{
 	{ServerNameCloudFlare, conf.DigiCertCertFile, DnsUrlCloudFlareA},
 	{ServerNameCloudFlare, conf.DigiCertCertFile, DnsUrlCloudFlareB},
 }
 
-var quad9 = []DnsResolverParam{
+var quad9Pool = []DnsResolverParam{
 	{ServerNameQuad9, conf.DigiCertCertFile, DnsUrlQuad9},
 }
 
 func NewDnsPool() []service.DnsResolver {
-	return NewDnsResolverPool(pool)
+	return NewDnsResolverPool(globalPool)
 }
 
 func NewGoogleDnsPool() []service.DnsResolver {
-	return NewDnsResolverPool(google)
+	return NewDnsResolverPool(googlePool)
 }
 
 func NewCloudFlareDnsPool() []service.DnsResolver {
-	return NewDnsResolverPool(cloudFlare)
+	return NewDnsResolverPool(cloudFlarePool)
 }
 
 func NewQuad9DnsPool() []service.DnsResolver {
-	return NewDnsResolverPool(quad9)
+	return NewDnsResolverPool(quad9Pool)
 }
 
 func NewDnsResolverPool(params []DnsResolverParam) []service.DnsResolver {

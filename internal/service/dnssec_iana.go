@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func LoadIanaFile(content string) []model.IanaKeyDigest {
+func LoadIanaFile(content string) model.IanaAnchors {
 
 	var anchor model.IanaAnchors
 	err := xml.Unmarshal([]byte(content), &anchor)
@@ -15,7 +15,14 @@ func LoadIanaFile(content string) []model.IanaKeyDigest {
 		log.Fatal(err)
 	}
 
-	keys := anchor.KeyDigests(time.Now())
+	anchor.KeyDigest = anchor.KeyDigests(time.Now())
 
-	return keys
+	return anchor
+}
+
+// SaveIanaFile applies a time filter to existing keys and save it again to its binary form
+func SaveIanaFile(anchor model.IanaAnchors) ([]byte, error) {
+	anchor.KeyDigest = anchor.KeyDigests(time.Now())
+	b, err := xml.Marshal(anchor)
+	return b, err
 }

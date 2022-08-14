@@ -15,6 +15,7 @@ func TestRestyAll(t *testing.T) {
 	transverse.SetTest()
 
 	// TODO replace those tests with a dns resolver instead
+
 	// thus avoiding using http.StatusBadRequest or http.StatusNotFound
 	tests := []struct {
 		provider RestProvider

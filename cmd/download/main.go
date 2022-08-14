@@ -6,6 +6,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/go-resty/resty/v2"
+	"golang-dns/internal/service"
+	"io/fs"
 	"io/ioutil"
 	"log"
 	"strings"
@@ -41,7 +43,7 @@ const (
 // Download root certificates for all implemented DNS resolvers.
 func main() {
 
-	//TODO filter trust anchors here by date and generate a new file, keep only the hash
+	//TODO filter trust anchors here by date and generate a new file
 	//validate dns call with that new setting (using clock of this computer)
 
 	type DigestAssertion struct {
@@ -78,6 +80,10 @@ func main() {
 	}
 
 	log.Println("FILES ARE VALID")
+
+	log.Println("filtering iana anchors with local time ...")
+	ReadWriteIana()
+
 	log.Println(fmt.Sprintf("time is %s", time.Now()))
 }
 
@@ -129,6 +135,15 @@ func readFile(name, outputDir string) []byte {
 	return b
 }
 
+func saveFile(name, outputDir string, data []byte) []byte {
+	file := fmt.Sprintf("%s/%s", outputDir, name)
+	err := ioutil.WriteFile(file, data, fs.ModePerm)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return nil
+}
+
 func fromBase64(content string) []byte {
 	b, err := base64.StdEncoding.DecodeString(content)
 	if err != nil {
@@ -159,4 +174,13 @@ func newIanaChecksum(content []byte) map[string]string {
 	}
 
 	return m
+}
+
+func ReadWriteIana() {
+	name := fileName(ianaRootAnchors)
+	b, err := service.SaveIanaFile(service.LoadIanaFile(string(readFile(name, outputDirDns))))
+	if err != nil {
+		log.Fatal("unable to read/save iana anchors")
+	}
+	saveFile(name, outputDirDns, b)
 }
