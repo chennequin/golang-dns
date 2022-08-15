@@ -3,27 +3,28 @@ package service
 import (
 	"github.com/miekg/dns"
 	"golang-dns/internal/service/conf"
+	"net"
 	"testing"
 )
 
 func NewDnsPoolResolver() DnsResolver {
 	return NewDnsResolverPoolImpl(
-		NewDnsResolverRestyImpl(NewHardenedResty("dns.google", conf.GoogleCertFile), "https://8.8.8.8/dns-query"),
-		NewDnsResolverRestyImpl(NewHardenedResty("dns.google", conf.GoogleCertFile), "https://8.8.4.4/dns-query"),
+		NewDnsResolverRestyImpl(NewHardenedResty("dns.google", conf.GoogleCertFile, net.IPv4(8, 8, 8, 8)), "https://8.8.8.8/dns-query"),
+		NewDnsResolverRestyImpl(NewHardenedResty("dns.google", conf.GoogleCertFile, net.IPv4(8, 8, 4, 4)), "https://8.8.4.4/dns-query"),
 	)
 }
 
 func NewErroneousDnsPoolResolver() DnsResolver {
 	return NewDnsResolverPoolImpl(
-		NewDnsResolverRestyImpl(NewHardenedResty("dns.google", conf.GoogleCertFile), "https://8.8.8.8/erroneous"),
-		NewDnsResolverRestyImpl(NewHardenedResty("dns.google", conf.GoogleCertFile), "https://8.8.4.4/dns-query"),
+		NewDnsResolverRestyImpl(NewHardenedResty("dns.google", conf.GoogleCertFile, net.IPv4(8, 8, 8, 8)), "https://8.8.8.8/erroneous"),
+		NewDnsResolverRestyImpl(NewHardenedResty("dns.google", conf.GoogleCertFile, net.IPv4(8, 8, 4, 4)), "https://8.8.4.4/dns-query"),
 	)
 }
 
 func NewMalFunctioningDnsPoolResolver() DnsResolver {
 	return NewDnsResolverPoolImpl(
-		NewDnsResolverRestyImpl(NewHardenedResty("dns.google", conf.GoogleCertFile), "https://8.8.8.8/erroneous"),
-		NewDnsResolverRestyImpl(NewHardenedResty("dns.google", conf.GoogleCertFile), "https://8.8.4.4/erroneous"),
+		NewDnsResolverRestyImpl(NewHardenedResty("dns.google", conf.GoogleCertFile, net.IPv4(8, 8, 8, 8)), "https://8.8.8.8/erroneous"),
+		NewDnsResolverRestyImpl(NewHardenedResty("dns.google", conf.GoogleCertFile, net.IPv4(8, 8, 4, 4)), "https://8.8.4.4/erroneous"),
 	)
 }
 

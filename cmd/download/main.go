@@ -33,10 +33,6 @@ const (
 	// DigiCert TLS Hybrid ECC SHA384 2020 CA1
 	hybridCa1     = "https://cacerts.digicert.com/DigiCertTLSHybridECCSHA3842020CA1-1.crt.pem"
 	hybridCa1Hash = "F7:A9:A1:B2:FD:96:4A:3F:26:70:BD:66:8D:56:1F:B7:C5:5D:3A:A9:AB:83:91:E7:E1:69:70:2D:B8:A3:DB:CF"
-
-	// https://www.tbs-certificates.co.uk/FAQ/en/USERTrust_ECC_CA.html
-	userTrust     = "http://www.tbs-x509.com/USERTrustECCCertificationAuthority.crt"
-	userTrustHash = "4F F4 60 D5 4B 9C 86 DA BF BC FC 57 12 E0 40 0D 2B ED 3F BC 4D 4F BD AA 86 E0 6A DC D2 A9 AD 7A"
 )
 
 // Download DNSSEC Trust Anchors files from iana.org website.
@@ -55,7 +51,6 @@ func main() {
 	downloadSave(ianaChecksums, tmpDir)
 	downloadSave(gts1c3, outputDirCertificates)
 	downloadSave(hybridCa1, outputDirCertificates)
-	downloadSave(userTrust, outputDirCertificates)
 
 	anchors := fileName(ianaRootAnchors)
 	m := newIanaChecksum(readFile(fileName(ianaChecksums), tmpDir))
@@ -67,7 +62,6 @@ func main() {
 		{fingerPrint(m[anchors]), sha256(readFile(anchors, outputDirDns))},
 		{fingerPrint(gts1c3Hash), readCert(gts1c3)},
 		{fingerPrint(hybridCa1Hash), readCert(hybridCa1)},
-		{fingerPrint(userTrustHash), readCert(userTrust)},
 	}
 
 	for _, v := range hashes {

@@ -16,7 +16,7 @@ func NewDnsResolverPoolImpl(resolvers ...DnsResolver) DnsResolver {
 	defer transverse.Logger().Printf("%s initialized", &rsv)
 	defer rsv.initDnsResolverBase(&rsv)
 	rsv.resolvers = resolvers
-	return rsv
+	return &rsv
 }
 
 func (rsv DnsResolverPoolImpl) Query(name string, dnsType uint16) (model.DnsResponse, error) {

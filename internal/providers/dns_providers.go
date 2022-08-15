@@ -4,72 +4,85 @@ import (
 	"fmt"
 	"golang-dns/internal/service"
 	"golang-dns/internal/service/conf"
+	"net"
 )
 
 const (
 	ServerNameGoogle     = "dns.google"
 	ServerNameQuad9      = "quad9.net"
 	ServerNameCloudFlare = "cloudflare-dns.com"
-	ServerNameNextDns    = "dns.nextdns.io"
-
-	DnsUrlGoogleA     = "https://8.8.8.8/dns-query"
-	DnsUrlGoogleB     = "https://8.8.4.4/dns-query"
-	DnsUrlCloudFlareA = "https://1.1.1.1/dns-query"
-	DnsUrlCloudFlareB = "https://1.0.0.1/dns-query"
-	DnsUrlQuad9       = "https://9.9.9.9/dns-query"
-	DnsUrlNextDns     = "https://dns.nextdns.io/%s"
 )
 
-type RestProvider func() service.HardenedResty
-type DnsResolverProvider func() service.DnsResolver
+var (
+	IpGoogleA     = net.IPv4(8, 8, 8, 8)
+	IpGoogleB     = net.IPv4(8, 8, 4, 4)
+	IpCloudFlareA = net.IPv4(1, 1, 1, 1)
+	IpCloudFlareB = net.IPv4(1, 0, 0, 1)
+	IpQuad9       = net.IPv4(9, 9, 9, 9)
+
+	DnsUrlGoogleA     = fmt.Sprintf("https://%s/dns-query", IpGoogleA)
+	DnsUrlGoogleB     = fmt.Sprintf("https://%s/dns-query", IpGoogleB)
+	DnsUrlCloudFlareA = fmt.Sprintf("https://%s/dns-query", IpCloudFlareA)
+	DnsUrlCloudFlareB = fmt.Sprintf("https://%s/dns-query", IpCloudFlareB)
+	DnsUrlQuad9       = fmt.Sprintf("https://%s/dns-query", IpQuad9)
+)
+
+//type RestProvider func() service.HardenedResty
+//type DnsResolverProvider func() service.DnsResolver
+
 type DnsResolverParam struct {
 	ServerName string
 	CertFile   string
 	Url        string
+	ip         net.IP
 }
 
 var globalPool = []DnsResolverParam{
-	{ServerNameGoogle, conf.GoogleCertFile, DnsUrlGoogleA},
-	{ServerNameGoogle, conf.GoogleCertFile, DnsUrlGoogleB},
-	{ServerNameCloudFlare, conf.DigiCertCertFile, DnsUrlCloudFlareA},
-	{ServerNameCloudFlare, conf.DigiCertCertFile, DnsUrlCloudFlareB},
-	{ServerNameQuad9, conf.DigiCertCertFile, DnsUrlQuad9},
+	{ServerNameGoogle, conf.GoogleCertFile, DnsUrlGoogleA, IpGoogleA},
+	{ServerNameGoogle, conf.GoogleCertFile, DnsUrlGoogleB, IpGoogleB},
+	{ServerNameCloudFlare, conf.DigiCertCertFile, DnsUrlCloudFlareA, IpCloudFlareA},
+	{ServerNameCloudFlare, conf.DigiCertCertFile, DnsUrlCloudFlareB, IpCloudFlareB},
+	{ServerNameQuad9, conf.DigiCertCertFile, DnsUrlQuad9, IpQuad9},
 }
 
 var googlePool = []DnsResolverParam{
-	{ServerNameGoogle, conf.GoogleCertFile, DnsUrlGoogleA},
-	{ServerNameGoogle, conf.GoogleCertFile, DnsUrlGoogleB},
+	{ServerNameGoogle, conf.GoogleCertFile, DnsUrlGoogleA, IpGoogleA},
+	{ServerNameGoogle, conf.GoogleCertFile, DnsUrlGoogleB, IpGoogleB},
 }
 
 var cloudFlarePool = []DnsResolverParam{
-	{ServerNameCloudFlare, conf.DigiCertCertFile, DnsUrlCloudFlareA},
-	{ServerNameCloudFlare, conf.DigiCertCertFile, DnsUrlCloudFlareB},
+	{ServerNameCloudFlare, conf.DigiCertCertFile, DnsUrlCloudFlareA, IpCloudFlareA},
+	{ServerNameCloudFlare, conf.DigiCertCertFile, DnsUrlCloudFlareB, IpCloudFlareB},
 }
 
 var quad9Pool = []DnsResolverParam{
-	{ServerNameQuad9, conf.DigiCertCertFile, DnsUrlQuad9},
+	{ServerNameQuad9, conf.DigiCertCertFile, DnsUrlQuad9, IpQuad9},
 }
 
-func NewDnsPool() []service.DnsResolver {
-	return NewDnsResolverPool(globalPool)
+type DnsPool struct {
+	resolvers []service.DnsResolver
 }
 
-func NewGoogleDnsPool() []service.DnsResolver {
-	return NewDnsResolverPool(googlePool)
+func NewGlobalDnsPool() service.DnsResolver {
+	return service.NewDnsResolverPoolImpl(NewDnsResolverPool(globalPool...)...)
 }
 
-func NewCloudFlareDnsPool() []service.DnsResolver {
-	return NewDnsResolverPool(cloudFlarePool)
+func NewGoogleDnsPool() service.DnsResolver {
+	return service.NewDnsResolverPoolImpl(NewDnsResolverPool(googlePool...)...)
 }
 
-func NewQuad9DnsPool() []service.DnsResolver {
-	return NewDnsResolverPool(quad9Pool)
+func NewCloudFlareDnsPool() service.DnsResolver {
+	return service.NewDnsResolverPoolImpl(NewDnsResolverPool(cloudFlarePool...)...)
 }
 
-func NewDnsResolverPool(params []DnsResolverParam) []service.DnsResolver {
+func NewQuad9DnsPool() service.DnsResolver {
+	return service.NewDnsResolverPoolImpl(NewDnsResolverPool(quad9Pool...)...)
+}
+
+func NewDnsResolverPool(params ...DnsResolverParam) []service.DnsResolver {
 	resolvers := make([]service.DnsResolver, len(params))
 	for i, p := range params {
-		resolvers[i] = service.NewDnsResolverRestyImpl(service.NewHardenedResty(p.ServerName, p.CertFile), p.Url)
+		resolvers[i] = service.NewDnsResolverRestyImpl(service.NewHardenedResty(p.ServerName, p.CertFile, p.ip), p.Url)
 	}
 	return resolvers
 }
@@ -77,35 +90,27 @@ func NewDnsResolverPool(params []DnsResolverParam) []service.DnsResolver {
 /**********/
 
 func NewRestyGoogle() service.HardenedResty {
-	return service.NewHardenedResty(ServerNameGoogle, conf.GoogleCertFile)
+	return service.NewHardenedResty(ServerNameGoogle, conf.GoogleCertFile, IpGoogleA)
 }
 
 func NewRestyQuad9() service.HardenedResty {
-	return service.NewHardenedResty(ServerNameQuad9, conf.DigiCertCertFile)
+	return service.NewHardenedResty(ServerNameQuad9, conf.DigiCertCertFile, IpQuad9)
 }
 
 func NewRestyCloudFlare() service.HardenedResty {
-	return service.NewHardenedResty(ServerNameCloudFlare, conf.DigiCertCertFile)
-}
-
-func NewRestyNextDns() service.HardenedResty {
-	return service.NewHardenedResty(ServerNameNextDns, conf.UserTrustCertFile)
+	return service.NewHardenedResty(ServerNameCloudFlare, conf.DigiCertCertFile, IpCloudFlareA)
 }
 
 /**********/
 
 func NewDnsResolverGoogle() service.DnsResolver {
-	return service.NewDnsResolverRestyImpl(service.NewHardenedResty(ServerNameGoogle, conf.GoogleCertFile), DnsUrlGoogleA)
+	return service.NewDnsResolverRestyImpl(service.NewHardenedResty(ServerNameGoogle, conf.GoogleCertFile, IpGoogleA), DnsUrlGoogleA)
 }
 
 func NewDnsResolverQuad9() service.DnsResolver {
-	return service.NewDnsResolverRestyImpl(service.NewHardenedResty(ServerNameQuad9, conf.DigiCertCertFile), DnsUrlQuad9)
+	return service.NewDnsResolverRestyImpl(service.NewHardenedResty(ServerNameQuad9, conf.DigiCertCertFile, IpQuad9), DnsUrlQuad9)
 }
 
 func NewDnsResolverCloudFlare() service.DnsResolver {
-	return service.NewDnsResolverRestyImpl(service.NewHardenedResty(ServerNameCloudFlare, conf.DigiCertCertFile), DnsUrlCloudFlareA)
-}
-
-func NewDnsResolverNextDns(name string) service.DnsResolver {
-	return service.NewDnsResolverRestyImpl(service.NewHardenedResty(ServerNameNextDns, conf.UserTrustCertFile), fmt.Sprintf(DnsUrlNextDns, name))
+	return service.NewDnsResolverRestyImpl(service.NewHardenedResty(ServerNameCloudFlare, conf.DigiCertCertFile, IpCloudFlareA), DnsUrlCloudFlareA)
 }

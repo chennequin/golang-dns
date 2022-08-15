@@ -9,11 +9,6 @@ import (
 	"golang-dns/internal/transverse"
 )
 
-type DnsResolver interface {
-	Query(name string, dnsType uint16) (model.DnsResponse, error)
-	AsAsync() AsyncDnsResolver
-}
-
 type DnsResolverRestyImpl struct {
 	DnsResolverBase
 	client HardenedResty
@@ -26,7 +21,7 @@ func NewDnsResolverRestyImpl(client HardenedResty, url string) DnsResolver {
 	defer rsv.initDnsResolverBase(&rsv)
 	rsv.client = client
 	rsv.url = url
-	return rsv
+	return &rsv
 }
 
 func (rsv DnsResolverRestyImpl) Query(name string, dnsType uint16) (model.DnsResponse, error) {

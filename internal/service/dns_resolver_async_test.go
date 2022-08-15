@@ -3,11 +3,12 @@ package service
 import (
 	"github.com/miekg/dns"
 	"golang-dns/internal/service/conf"
+	"net"
 	"testing"
 )
 
 func NewAsyncDnsResolver() AsyncDnsResolver {
-	return NewAsyncDnsResolverImpl(NewDnsResolverRestyImpl(NewHardenedResty("dns.google", conf.GoogleCertFile), "https://8.8.8.8/dns-query"))
+	return NewAsyncDnsResolverImpl(NewDnsResolverRestyImpl(NewHardenedResty("dns.google", conf.GoogleCertFile, net.IPv4(8, 8, 8, 8)), "https://8.8.8.8/dns-query"))
 
 }
 

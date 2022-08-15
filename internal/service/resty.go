@@ -7,6 +7,13 @@ import (
 	"github.com/go-resty/resty/v2"
 	h "golang-dns/internal/helpers"
 	t "golang-dns/internal/transverse"
+	"net"
+	"net/http"
+	"net/url"
+	"runtime"
+	"strings"
+	"syscall"
+	"time"
 )
 
 type HardenedResty struct {
@@ -14,16 +21,16 @@ type HardenedResty struct {
 	serverName string
 }
 
-func NewHardenedResty(serverName, rootCertPemFile string) HardenedResty {
+func NewHardenedResty(serverName, rootCertPemFile string, ip net.IP) HardenedResty {
 	var rt HardenedResty
 	defer t.Logger().Printf("%s initialized", &rt)
-	rt.client = newSecureClient(serverName, rootCertPemFile)
 	rt.serverName = serverName
+	rt.client = rt.newRestyClient(serverName, rootCertPemFile, ip)
 	return rt
 }
 
-func newSecureClient(serverName, rootCertPemFile string) *resty.Client {
-	client := resty.New().
+func (rt HardenedResty) newRestyClient(serverName, rootCertPemFile string, ip net.IP) *resty.Client {
+	client := resty.NewWithClient(createHttpClient(ip)).
 		SetRetryCount(t.GetRetry()).
 		SetRedirectPolicy(resty.NoRedirectPolicy()).
 		SetTLSClientConfig(&tls.Config{
@@ -68,6 +75,58 @@ func (rt HardenedResty) Client() *resty.Client {
 
 func (rt HardenedResty) String() string {
 	return fmt.Sprintf("HardenedResty name=\"%s\" + rootCertificate", rt.serverName)
+}
+
+func createHttpTransport(ip net.IP) *http.Transport {
+
+	resolver := net.Resolver{
+		PreferGo:     true,
+		StrictErrors: true,
+		Dial:         nil,
+	}
+
+	dialer := &net.Dialer{
+		Timeout:   30 * time.Second,
+		KeepAlive: 30 * time.Second,
+		DualStack: true,
+		Resolver:  &resolver,
+		Control: func(network, address string, c syscall.RawConn) error {
+			if !strings.HasPrefix(network, "tcp4") {
+				return fmt.Errorf("only TCP/IPv4 allowed")
+			}
+			if !(address == fmt.Sprintf("%s:443", ip)) {
+				return fmt.Errorf("unauthorized connection to %s", address)
+			}
+			return nil
+		},
+	}
+
+	return &http.Transport{
+		Proxy: func(_ *http.Request) (*url.URL, error) {
+			return nil, nil // enforce no proxy
+		},
+		DialContext:           dialer.DialContext,
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+		MaxIdleConnsPerHost:   runtime.GOMAXPROCS(0) + 1,
+	}
+}
+
+func createHttpClient(ip net.IP) *http.Client {
+
+	client := http.Client{
+		Transport: createHttpTransport(ip),
+		CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
+			return fmt.Errorf("redirect are fordbidden")
+		},
+		Jar:     nil, // no cookies for DNS queries
+		Timeout: 30 * time.Second,
+	}
+
+	return &client
 }
 
 //TODO

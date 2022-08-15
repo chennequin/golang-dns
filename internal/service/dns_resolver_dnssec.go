@@ -12,13 +12,13 @@ type DnssecResolver struct {
 	validator DnssecValidator
 }
 
-func NewDnssecResolver(resolver DnsResolver, validator DnssecValidator) DnssecResolver {
+func NewDnssecResolver(resolver DnsResolver, validator DnssecValidator) DnsResolver {
 	var rsv DnssecResolver
 	defer transverse.Logger().Printf("%s initialized", &rsv)
 	defer rsv.initDnsResolverBase(&rsv)
 	rsv.resolver = resolver
 	rsv.validator = validator
-	return rsv
+	return &rsv
 }
 
 func (f DnssecResolver) Query(name string, dnsType uint16) (model.DnsResponse, error) {

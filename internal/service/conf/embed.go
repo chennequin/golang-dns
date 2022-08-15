@@ -7,9 +7,6 @@ import (
 //go:embed dns/root-anchors.xml
 var IanaFile string
 
-//go:embed certificates/USERTrustECCCertificationAuthority.crt
-var UserTrustCertFile string
-
 //go:embed certificates/gts1c3.pem
 var GoogleCertFile string
 

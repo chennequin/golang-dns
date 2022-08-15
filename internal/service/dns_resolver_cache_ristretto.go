@@ -35,7 +35,7 @@ func NewDnsCacheEntry(r model.DnsResponse) DnsCacheEntry {
 	}
 }
 
-func NewDnsCache(resolver DnsResolver) DnsCache {
+func NewDnsCache(resolver DnsResolver) DnsResolver {
 
 	var rsv DnsCache
 
@@ -54,7 +54,7 @@ func NewDnsCache(resolver DnsResolver) DnsCache {
 	rsv.resolver = resolver
 	rsv.cache = cache
 
-	return rsv
+	return &rsv
 }
 
 func (rsv DnsCache) Query(name string, dnsType uint16) (model.DnsResponse, error) {
