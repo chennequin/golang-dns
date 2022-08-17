@@ -5,19 +5,19 @@ import (
 	"github.com/miekg/dns"
 )
 
-type DnsKeyResponse struct {
-	DnsResponse
+type DnsKeyMsg struct {
+	DnsMsg
 }
 
-func NewDnsKeyResponse(m *dns.Msg) DnsKeyResponse {
-	return DnsKeyResponse{DnsResponse: DnsResponse{m: m}}
+func NewDnsKeyResponse(m *dns.Msg) DnsKeyMsg {
+	return DnsKeyMsg{DnsMsg: DnsMsg{m: m}}
 }
 
-func (r DnsKeyResponse) KSK() *dns.DNSKEY {
+func (r DnsKeyMsg) KSK() *dns.DNSKEY {
 	return r.ByKeyTag(r.GetRRSIG().KeyTag)
 }
 
-func (r DnsKeyResponse) ByKeyTag(keyTag uint16) *dns.DNSKEY {
+func (r DnsKeyMsg) ByKeyTag(keyTag uint16) *dns.DNSKEY {
 	for _, v := range r.m.Answer {
 		if t, ok := v.(*dns.DNSKEY); ok {
 			if t.KeyTag() == keyTag {
@@ -28,12 +28,12 @@ func (r DnsKeyResponse) ByKeyTag(keyTag uint16) *dns.DNSKEY {
 	return nil
 }
 
-func (r DnsKeyResponse) VerifyRRSIG() error {
+func (r DnsKeyMsg) VerifyRRSIG() error {
 	return r.VerifySig(r.KSK())
 }
 
 // VerifyTrustAnchor compares the KSK with the specified trust anchor
-func (r DnsKeyResponse) VerifyTrustAnchor(anchors []IanaKeyDigest) error {
+func (r DnsKeyMsg) VerifyTrustAnchor(anchors []IanaKeyDigest) error {
 
 	kk := r.KSK()
 

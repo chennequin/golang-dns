@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"github.com/dgraph-io/ristretto"
+	h "golang-dns/internal/helpers"
 	"golang-dns/internal/model"
 	"golang-dns/internal/transverse"
 )
@@ -16,7 +17,7 @@ type DnsCache struct {
 type DnsCacheEntry struct {
 	name     string
 	dnsType  uint16
-	response model.DnsResponse
+	response model.DnsMsg
 }
 
 func (e DnsCacheEntry) String() string {
@@ -29,7 +30,7 @@ func NewDnsCacheKey(name string, dnsType uint16) string {
 	return fmt.Sprintf("%s/%d", name, dnsType)
 }
 
-func NewDnsCacheEntry(r model.DnsResponse) DnsCacheEntry {
+func NewDnsCacheEntry(r model.DnsMsg) DnsCacheEntry {
 	return DnsCacheEntry{
 		response: r,
 	}
@@ -57,20 +58,31 @@ func NewDnsCache(resolver DnsResolver) DnsResolver {
 	return &rsv
 }
 
-func (rsv DnsCache) Query(name string, dnsType uint16) (model.DnsResponse, error) {
+func (rsv DnsCache) Query(name string, dnsType uint16) (model.DnsMsg, error) {
+	rm := model.NewDnsMsg(h.Msg(name, dnsType))
+	return rsv.Proxy(rm)
+}
 
-	key := NewDnsCacheKey(name, dnsType)
+func (rsv DnsCache) Proxy(rm model.DnsMsg) (model.DnsMsg, error) {
+
+	key := NewDnsCacheKey(rm.GetDN(), rm.GetDnsType())
 	value, found := rsv.cache.Get(key)
 	if !found {
-		r, err := rsv.resolver.Query(name, dnsType)
+		nrm, err := rsv.resolver.Proxy(rm)
 		if err == nil {
-			rsv.cache.SetWithTTL(key, NewDnsCacheEntry(r), 1, r.GetTTL())
+			rsv.cache.SetWithTTL(key, NewDnsCacheEntry(nrm), 1, nrm.GetTTL())
 			rsv.cache.Wait()
 		}
-		return r, err
+		return nrm, err
 	}
 
-	return value.(DnsCacheEntry).response, nil
+	// adapt to the id of the request avoiding errors like
+	// ;; Warning: ID mismatch: expected ID 34825, got 13184
+	nrm := value.(DnsCacheEntry).response
+	nrm.GetMsg().Id = rm.GetMsg().Id
+
+	return nrm, nil
+
 }
 
 func (_ DnsCache) String() string {

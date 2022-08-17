@@ -24,20 +24,28 @@ func NewDnsResolverRestyImpl(client HardenedResty, url string) DnsResolver {
 	return &rsv
 }
 
-func (rsv DnsResolverRestyImpl) Query(name string, dnsType uint16) (model.DnsResponse, error) {
+func (rsv DnsResolverRestyImpl) Query(name string, dnsType uint16) (model.DnsMsg, error) {
 
-	m := h.Msg(name, dnsType)
-	r := model.NewDnsResponse(m)
+	rm := model.NewDnsMsg(h.Msg(name, dnsType))
 
 	if _, valid := dns.IsDomainName(name); !valid {
-		return r, fmt.Errorf("must provide a valid domain name")
+		return rm, fmt.Errorf("must provide a valid domain name")
 	}
 
-	in, err := rsv.packPostUnpack(m)
-	return model.NewDnsResponse(in), err
+	in, err := rsv.Proxy(rm)
+	return in, err
+}
+
+func (rsv DnsResolverRestyImpl) Proxy(rm model.DnsMsg) (model.DnsMsg, error) {
+	transverse.Logger().Printf("%s", rm.GetMsg().Question[0].String())
+	in, err := rsv.packPostUnpack(rm.GetMsg())
+	return model.NewDnsMsg(in), err
 }
 
 func (rsv DnsResolverRestyImpl) packPostUnpack(m *dns.Msg) (*dns.Msg, error) {
+
+	m.RecursionDesired = true // +rev
+	m.SetEdns0(4096, true)    // +dnssec
 
 	b, err := m.Pack()
 	if err != nil {

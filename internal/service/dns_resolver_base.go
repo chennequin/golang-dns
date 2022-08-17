@@ -1,9 +1,12 @@
 package service
 
-import "golang-dns/internal/model"
+import (
+	"golang-dns/internal/model"
+)
 
 type DnsResolver interface {
-	Query(name string, dnsType uint16) (model.DnsResponse, error)
+	Query(name string, dnsType uint16) (model.DnsMsg, error)
+	Proxy(_ model.DnsMsg) (model.DnsMsg, error)
 	AsAsync() AsyncDnsResolver
 	WithCache() DnsResolver
 	WithDnssec() DnsResolver

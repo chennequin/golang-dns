@@ -6,7 +6,6 @@ import (
 	"golang-dns/internal/service/conf"
 	"golang-dns/internal/transverse"
 	"net"
-	"net/http"
 	"strings"
 	"testing"
 )
@@ -23,11 +22,12 @@ func TestHardenedResty(t *testing.T) {
 	var err error
 
 	resp, err = NewHardenedResty("dns.google", conf.GoogleCertFile, net.IPv4(8, 8, 8, 8)).
-		Client().R().Get("https://dns.google")
-	ValidateResponseOk(t, resp, err, http.StatusOK)
+		Client().R().Get("https://8.8.8.8")
+	ExpectEmptyBody(t, resp)
+	ExpectErr(t, err, "auto redirect is disabled")
 
 	resp, err = NewHardenedResty("dns.google", conf.GoogleCertFile, net.IPv4(8, 8, 8, 8)).
-		Client().R().Get("https://cloudflare-dns.com")
+		Client().R().Get("https://1.1.1.1")
 	ExpectEmptyBody(t, resp)
 	ExpectErr(t, err, "unauthorized connection")
 

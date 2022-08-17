@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	h "golang-dns/internal/helpers"
 	"golang-dns/internal/model"
 	"golang-dns/internal/transverse"
 )
@@ -19,19 +20,24 @@ func NewDnsResolverPoolImpl(resolvers ...DnsResolver) DnsResolver {
 	return &rsv
 }
 
-func (rsv DnsResolverPoolImpl) Query(name string, dnsType uint16) (model.DnsResponse, error) {
+func (rsv DnsResolverPoolImpl) Query(name string, dnsType uint16) (model.DnsMsg, error) {
+	rm := model.NewDnsMsg(h.Msg(name, dnsType))
+	return rsv.Proxy(rm)
+}
+
+func (rsv DnsResolverPoolImpl) Proxy(rm model.DnsMsg) (model.DnsMsg, error) {
 
 	accErrors := ""
 
 	for _, r := range rsv.resolvers {
-		if query, err := r.Query(name, dnsType); err == nil {
-			return query, nil
+		if nrm, err := r.Proxy(rm); err == nil {
+			return nrm, nil
 		} else {
 			accErrors = fmt.Sprintf("[%s] %s", err.Error(), accErrors)
 		}
 	}
 
-	return model.DnsResponse{}, fmt.Errorf("all resolvers returned error: %s", accErrors)
+	return rm, fmt.Errorf("all resolvers returned error: %s", accErrors)
 }
 
 func (rsv DnsResolverPoolImpl) String() string {

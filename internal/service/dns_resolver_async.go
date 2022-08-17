@@ -7,10 +7,11 @@ import (
 )
 
 type AsyncDnsResolver interface {
-	Query(name string, dnsType uint16) model.AsyncDnsResponse
+	Query(name string, dnsType uint16) model.AsyncDnsMsg
 }
 
 type AsyncDnsResolverImpl struct {
+	DnsResolverBase
 	resolver DnsResolver
 }
 
@@ -21,10 +22,11 @@ func NewAsyncDnsResolverImpl(resolver DnsResolver) AsyncDnsResolver {
 	return r
 }
 
-func (s AsyncDnsResolverImpl) Query(name string, dnsType uint16) model.AsyncDnsResponse {
-	async := model.NewAsyncDnsResponse()
+func (s AsyncDnsResolverImpl) Query(name string, dnsType uint16) model.AsyncDnsMsg {
+	async := model.NewAsyncDnsMsg()
 	go func() {
-		async.Push(s.resolver.Query(name, dnsType))
+		query, err := s.resolver.Query(name, dnsType)
+		async.Push(query, err)
 	}()
 	return async
 }

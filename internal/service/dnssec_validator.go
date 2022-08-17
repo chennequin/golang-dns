@@ -32,9 +32,9 @@ func NewDnssecValidatorFromIanaFile(resolver DnsResolver, anchors model.IanaAnch
 	return v
 }
 
-func (s DnssecValidator) Verify(r model.DnsResponse) error {
+func (s DnssecValidator) Verify(rm model.DnsMsg) error {
 
-	err := s.NewDnssecRecursion().RunVerify(r)
+	err := s.NewDnssecRecursion().RunVerify(rm)
 
 	if err != nil {
 		return fmt.Errorf("signature is invalid: %s", err)
@@ -56,8 +56,8 @@ type DnssecRecursion struct {
 
 type DnssecRecursionZone struct {
 	zone           string
-	keyAsyncResult *model.AsyncDnsResponse
-	dsAsyncResult  *model.AsyncDnsResponse
+	keyAsyncResult *model.AsyncDnsMsg
+	dsAsyncResult  *model.AsyncDnsMsg
 }
 
 func (s DnssecValidator) NewDnssecRecursion() DnssecRecursion {
@@ -67,7 +67,7 @@ func (s DnssecValidator) NewDnssecRecursion() DnssecRecursion {
 	}
 }
 
-func (recursion DnssecRecursion) PushToChan(zone string, keyAsyncResult, dsAsyncResult *model.AsyncDnsResponse) {
+func (recursion DnssecRecursion) PushToChan(zone string, keyAsyncResult, dsAsyncResult *model.AsyncDnsMsg) {
 	recursion.zone <- DnssecRecursionZone{
 		zone:           zone,
 		keyAsyncResult: keyAsyncResult,
@@ -75,15 +75,15 @@ func (recursion DnssecRecursion) PushToChan(zone string, keyAsyncResult, dsAsync
 	}
 }
 
-func (recursion DnssecRecursion) RunVerify(r model.DnsResponse) error {
-	recursion.RecurseVerify(0, r.GetDN(), ".")
-	err := recursion.PopVerify(r)
+func (recursion DnssecRecursion) RunVerify(rm model.DnsMsg) error {
+	recursion.RecurseVerify(0, rm.GetDN(), ".")
+	err := recursion.PopVerify(rm)
 	return err
 }
 
-func (recursion DnssecRecursion) PopVerify(r model.DnsResponse) error {
+func (recursion DnssecRecursion) PopVerify(rm model.DnsMsg) error {
 
-	var previousDnsKeyResponse *model.DnsKeyResponse
+	var previousDnsKeyResponse *model.DnsKeyMsg
 
 	for len(recursion.zone) > 0 {
 
@@ -107,8 +107,8 @@ func (recursion DnssecRecursion) PopVerify(r model.DnsResponse) error {
 			return err
 		}
 
-		if zsk := dnsKeyResp.ByKeyTag(r.GetRRSIG().KeyTag); zsk != nil {
-			if err = r.VerifySig(zsk); err != nil {
+		if zsk := dnsKeyResp.ByKeyTag(rm.GetRRSIG().KeyTag); zsk != nil {
+			if err = rm.VerifySig(zsk); err != nil {
 				return fmt.Errorf("unable to verify final RRSIG: %s", err.Error())
 			}
 			t.Logger().Printf("final signature is valid in zone: %s", zone.zone)
@@ -143,7 +143,7 @@ func (recursion DnssecRecursion) RecurseVerify(deep int, domain, zone string) {
 	recursion.RecurseVerify(deep+1, domain, subZone)
 }
 
-func (recursion DnssecRecursion) ValidateZone(zone string, dnsKeyResp *model.DnsKeyResponse, dsResp *model.DsResponse, parentDnsKeyResp *model.DnsKeyResponse, anchors []model.IanaKeyDigest) error {
+func (recursion DnssecRecursion) ValidateZone(zone string, dnsKeyResp *model.DnsKeyMsg, dsResp *model.DsMsg, parentDnsKeyResp *model.DnsKeyMsg, anchors []model.IanaKeyDigest) error {
 
 	t.LogDnssec("******** validating zone: %s", zone)
 

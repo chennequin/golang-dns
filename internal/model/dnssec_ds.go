@@ -6,16 +6,16 @@ import (
 	"strings"
 )
 
-type DsResponse struct {
-	DnsResponse
+type DsMsg struct {
+	DnsMsg
 }
 
-func NewDnsDsResponse(m *dns.Msg) DsResponse {
-	return DsResponse{DnsResponse: DnsResponse{m: m}}
+func NewDnsDsResponse(m *dns.Msg) DsMsg {
+	return DsMsg{DnsMsg: DnsMsg{m: m}}
 }
 
 // VerifyRRSIG verifies DS signature given the specified key
-func (r DsResponse) VerifyRRSIG(keyResponse *DnsKeyResponse) error {
+func (r DsMsg) VerifyRRSIG(keyResponse *DnsKeyMsg) error {
 	rrk := keyResponse.ByKeyTag(r.GetRRSIG().KeyTag) // key which signed DS in parent zone
 	return r.VerifySig(rrk)
 }

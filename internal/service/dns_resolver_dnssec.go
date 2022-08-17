@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	h "golang-dns/internal/helpers"
 	"golang-dns/internal/model"
 	"golang-dns/internal/transverse"
 )
@@ -21,19 +22,24 @@ func NewDnssecResolver(resolver DnsResolver, validator DnssecValidator) DnsResol
 	return &rsv
 }
 
-func (f DnssecResolver) Query(name string, dnsType uint16) (model.DnsResponse, error) {
+func (rsv DnssecResolver) Query(name string, dnsType uint16) (model.DnsMsg, error) {
+	rm := model.NewDnsMsg(h.Msg(name, dnsType))
+	return rsv.Proxy(rm)
+}
 
-	r, err := f.resolver.Query(name, dnsType)
+func (rsv DnssecResolver) Proxy(rm model.DnsMsg) (model.DnsMsg, error) {
+
+	in, err := rsv.resolver.Proxy(rm)
 	if err != nil {
-		return r, err
+		return in, err
 	}
 
-	if r.IsRRSIG() {
-		err = f.validator.Verify(r)
-		return r, err
+	if in.IsRRSIG() {
+		err = rsv.validator.Verify(in)
+		return in, err
 	}
 
-	return r, nil
+	return in, nil
 }
 
 func (_ DnssecResolver) String() string {

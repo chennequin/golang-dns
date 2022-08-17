@@ -5,7 +5,7 @@ const (
 )
 
 var (
-	FlagLogDnssec       = true
+	FlagLogDnssec       = false
 	FlagLogHttpsCerts   = false
 	FlagHttpEnableTrace = false
 

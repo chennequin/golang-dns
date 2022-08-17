@@ -7,7 +7,7 @@ import (
 )
 
 // VerifySig verifies signature of the given RRSET, RRSIG against the specified DNSKEY set
-func (r DnsResponse) VerifySig(ksk *dns.DNSKEY) error {
+func (r DnsMsg) VerifySig(ksk *dns.DNSKEY) error {
 
 	rrset := r.GetRR()
 	rrsig := r.GetRRSIG()

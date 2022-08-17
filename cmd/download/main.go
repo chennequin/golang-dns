@@ -39,9 +39,6 @@ const (
 // Download root certificates for all implemented DNS resolvers.
 func main() {
 
-	//TODO filter trust anchors here by date and generate a new file
-	//validate dns call with that new setting (using clock of this computer)
-
 	type DigestAssertion struct {
 		expect string
 		actual string

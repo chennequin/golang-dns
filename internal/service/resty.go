@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -19,12 +20,14 @@ import (
 type HardenedResty struct {
 	client     *resty.Client
 	serverName string
+	ip         net.IP
 }
 
 func NewHardenedResty(serverName, rootCertPemFile string, ip net.IP) HardenedResty {
 	var rt HardenedResty
 	defer t.Logger().Printf("%s initialized", &rt)
 	rt.serverName = serverName
+	rt.ip = ip
 	rt.client = rt.newRestyClient(serverName, rootCertPemFile, ip)
 	return rt
 }
@@ -74,23 +77,29 @@ func (rt HardenedResty) Client() *resty.Client {
 }
 
 func (rt HardenedResty) String() string {
-	return fmt.Sprintf("HardenedResty name=\"%s\" + rootCertificate", rt.serverName)
+	return fmt.Sprintf("HardenedResty name=\"%s\" ip=\"%s\" + rootCertificate", rt.serverName, rt.ip)
 }
 
 func createHttpTransport(ip net.IP) *http.Transport {
 
-	resolver := net.Resolver{
+	nilResolver := net.Resolver{
 		PreferGo:     true,
 		StrictErrors: true,
-		Dial:         nil,
+		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+			// DNS queries from Go are not allowed here.
+			// We are implementing a DNS resolver through that resty client,
+			// and don't want to use either the internal Go resolver or the Cgo version.
+			return nil, fmt.Errorf("no dial is allowed here")
+		},
 	}
 
 	dialer := &net.Dialer{
 		Timeout:   30 * time.Second,
 		KeepAlive: 30 * time.Second,
 		DualStack: true,
-		Resolver:  &resolver,
+		Resolver:  &nilResolver,
 		Control: func(network, address string, c syscall.RawConn) error {
+			// verifies that the established connection is done to the right destination IP using TCP/IPv4 only.
 			if !strings.HasPrefix(network, "tcp4") {
 				return fmt.Errorf("only TCP/IPv4 allowed")
 			}
@@ -128,15 +137,3 @@ func createHttpClient(ip net.IP) *http.Client {
 
 	return &client
 }
-
-//TODO
-// Resolver optionally specifies an alternate resolver to use.
-//Resolver *Resolver
-
-// If Control is not nil, it is called after creating the network
-// connection but before actually dialing.
-//
-// Network and address parameters passed to Control method are not
-// necessarily the ones passed to Dial. For example, passing "tcp" to Dial
-// will cause the Control function to be called with "tcp4" or "tcp6".
-//Control func(network, address string, c syscall.RawConn) error

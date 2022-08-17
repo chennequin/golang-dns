@@ -11,71 +11,71 @@ const (
 	defaultTTL = 5 * time.Minute
 )
 
-type DnsResponse struct {
+type DnsMsg struct {
 	m *dns.Msg
 }
 
-func NewDnsResponse(m *dns.Msg) DnsResponse {
-	return DnsResponse{m: m}
+func NewDnsMsg(m *dns.Msg) DnsMsg {
+	return DnsMsg{m: m}
 }
 
-func (r DnsResponse) GetTTL() time.Duration {
+func (r DnsMsg) GetTTL() time.Duration {
 	if len(r.m.Answer) > 0 {
 		return time.Duration(r.m.Answer[0].Header().Ttl) * time.Second
 	}
 	return defaultTTL
 }
 
-func (r DnsResponse) GetDN() string {
+func (r DnsMsg) GetDN() string {
 	return r.m.Question[0].Name
 }
 
-func (r DnsResponse) GetDnsType() uint16 {
+func (r DnsMsg) GetDnsType() uint16 {
 	return r.m.Question[0].Qtype
 }
 
-func (r DnsResponse) GetMsg() *dns.Msg {
+func (r DnsMsg) GetMsg() *dns.Msg {
 	return r.m
 }
 
-func (r DnsResponse) GetRR() []dns.RR {
+func (r DnsMsg) GetRR() []dns.RR {
 	return h.CollectAll(r.m.Answer, r.GetDnsType())
 }
 
-func (r DnsResponse) GetDNSKEY() []dns.RR {
+func (r DnsMsg) GetDNSKEY() []dns.RR {
 	return h.CollectAll(r.m.Answer, dns.TypeDNSKEY)
 }
 
-func (r DnsResponse) GetRRSIG() *dns.RRSIG {
+func (r DnsMsg) GetRRSIG() *dns.RRSIG {
 	if rrsig := h.CollectOne(r.m.Answer, dns.TypeRRSIG); rrsig != nil {
 		return rrsig.(*dns.RRSIG)
 	}
 	return nil
 }
 
-func (r DnsResponse) GetDS() *dns.DS {
+func (r DnsMsg) GetDS() *dns.DS {
 	if rr := h.CollectOne(r.m.Answer, dns.TypeDS); rr != nil {
 		return rr.(*dns.DS)
 	}
 	return nil
 }
 
-func (r DnsResponse) IsRRSIG() bool {
+func (r DnsMsg) IsRRSIG() bool {
 	return r.GetRRSIG() != nil
 }
 
-func (r DnsResponse) IsEmpty() bool {
+func (r DnsMsg) IsEmpty() bool {
 	return r.m.Answer == nil
 }
 
-func (r DnsResponse) AsDsResponse() DsResponse {
+func (r DnsMsg) AsDsResponse() DsMsg {
 	return NewDnsDsResponse(r.m)
 }
 
-func (r DnsResponse) AsDnsKeyResponse() DnsKeyResponse {
+func (r DnsMsg) AsDnsKeyResponse() DnsKeyMsg {
 	return NewDnsKeyResponse(r.m)
 }
 
-func (r DnsResponse) String() string {
-	return fmt.Sprintf("AsyncDnsResponse: %s", r.m)
+func (r DnsMsg) String() string {
+	return fmt.Sprintf("AsyncDnsMsg: %s", r.m)
 }

@@ -10,7 +10,7 @@ import (
 )
 
 func LogPeerCertificate(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) {
-	t.Logger().Println("***************************")
+	println("***************************")
 	for _, chain := range verifiedChains {
 		for _, cert := range chain {
 			t.Logger().Println("-----BEGIN CERTIFICATE-----")
@@ -25,10 +25,12 @@ func LogPeerCertificate(rawCerts [][]byte, verifiedChains [][]*x509.Certificate)
 			t.Logger().Println("-----END CERTIFICATE-----")
 		}
 	}
-	t.Logger().Println("***************************")
+	println("***************************")
 }
 
 func LogTrace(resp *resty.Response, err error) {
+
+	println("***************************")
 
 	fmt.Println("Response Info:")
 	fmt.Println("  Error      :", err)
@@ -54,6 +56,8 @@ func LogTrace(resp *resty.Response, err error) {
 	fmt.Println("  ConnIdleTime  :", ti.ConnIdleTime)
 	fmt.Println("  RequestAttempt:", ti.RequestAttempt)
 	fmt.Println("  RemoteAddr    :", ti.RemoteAddr.String())
+
+	println("***************************")
 }
 
 func VerifyCipherSuite(cipherSuite uint16) error {

@@ -2,26 +2,26 @@ package model
 
 import "fmt"
 
-type AsyncDnsResponse struct {
-	c   chan DnsResponse
+type AsyncDnsMsg struct {
+	c   chan DnsMsg
 	err error
 }
 
-func NewAsyncDnsResponse() AsyncDnsResponse {
-	return AsyncDnsResponse{
-		c: make(chan DnsResponse),
+func NewAsyncDnsMsg() AsyncDnsMsg {
+	return AsyncDnsMsg{
+		c: make(chan DnsMsg),
 	}
 }
 
-func (r AsyncDnsResponse) Push(resp DnsResponse, err error) {
+func (r AsyncDnsMsg) Push(resp DnsMsg, err error) {
 	r.c <- resp
 	r.err = err
 }
 
-func (r AsyncDnsResponse) Result() (DnsResponse, error) {
+func (r AsyncDnsMsg) Result() (DnsMsg, error) {
 	return <-r.c, r.err
 }
 
-func (r AsyncDnsResponse) String() string {
-	return fmt.Sprintf("AsyncDnsResponse result: %d", len(r.c))
+func (r AsyncDnsMsg) String() string {
+	return fmt.Sprintf("AsyncDnsMsg result: %d", len(r.c))
 }
