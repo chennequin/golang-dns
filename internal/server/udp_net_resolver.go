@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func NewLoopBackNetResolver() *net.Resolver {
+func NewUdpLoopBackNetResolver() *net.Resolver {
 	dialer := net.Dialer{
 		Timeout: time.Second * 2,
 	}

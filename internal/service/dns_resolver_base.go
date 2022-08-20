@@ -10,6 +10,7 @@ type DnsResolver interface {
 	AsAsync() AsyncDnsResolver
 	WithCache() DnsResolver
 	WithDnssec() DnsResolver
+	WithBadger() DnsResolver
 }
 
 type DnsResolverBase struct {
@@ -30,4 +31,8 @@ func (s *DnsResolverBase) WithCache() DnsResolver {
 
 func (s *DnsResolverBase) WithDnssec() DnsResolver {
 	return NewDnssecResolver(s.resolver, NewDnssecValidator(s.resolver))
+}
+
+func (s *DnsResolverBase) WithBadger() DnsResolver {
+	return NewBadgerService(s.resolver)
 }

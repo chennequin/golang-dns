@@ -14,28 +14,6 @@ type DnsCache struct {
 	cache    *ristretto.Cache
 }
 
-type DnsCacheEntry struct {
-	name     string
-	dnsType  uint16
-	response model.DnsMsg
-}
-
-func (e DnsCacheEntry) String() string {
-	return fmt.Sprintf("{m:%v}", e.response.GetMsg())
-}
-
-type DnsCacheKey string
-
-func NewDnsCacheKey(name string, dnsType uint16) string {
-	return fmt.Sprintf("%s/%d", name, dnsType)
-}
-
-func NewDnsCacheEntry(r model.DnsMsg) DnsCacheEntry {
-	return DnsCacheEntry{
-		response: r,
-	}
-}
-
 func NewDnsCache(resolver DnsResolver) DnsResolver {
 
 	var rsv DnsCache
@@ -65,12 +43,12 @@ func (rsv DnsCache) Query(name string, dnsType uint16) (model.DnsMsg, error) {
 
 func (rsv DnsCache) Proxy(rm model.DnsMsg) (model.DnsMsg, error) {
 
-	key := NewDnsCacheKey(rm.GetDN(), rm.GetDnsType())
+	key := model.NewDnsCacheKey(rm.GetDN(), rm.GetDnsType())
 	value, found := rsv.cache.Get(key)
 	if !found {
 		nrm, err := rsv.resolver.Proxy(rm)
 		if err == nil {
-			rsv.cache.SetWithTTL(key, NewDnsCacheEntry(nrm), 1, nrm.GetTTL())
+			rsv.cache.SetWithTTL(key, model.NewDnsRistrettoEntry(nrm), 1, nrm.GetTTL())
 			rsv.cache.Wait()
 		}
 		return nrm, err
@@ -78,7 +56,7 @@ func (rsv DnsCache) Proxy(rm model.DnsMsg) (model.DnsMsg, error) {
 
 	// adapt to the id of the request avoiding errors like
 	// ;; Warning: ID mismatch: expected ID 34825, got 13184
-	nrm := value.(DnsCacheEntry).response
+	nrm := value.(model.DnsRistrettoEntry).Value()
 	nrm.GetMsg().Id = rm.GetMsg().Id
 
 	return nrm, nil

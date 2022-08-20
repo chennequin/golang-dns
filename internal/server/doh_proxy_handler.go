@@ -14,7 +14,7 @@ type DnsOverHttpsHandler struct {
 
 func NewDnsOverHttpsHandler() DnsOverHttpsHandler {
 	return DnsOverHttpsHandler{
-		resolver: providers.NewGoogleDnsPool().WithCache().WithDnssec(),
+		resolver: providers.NewGoogleDnsPool().WithCache().WithDnssec().WithBadger(),
 	}
 }
 

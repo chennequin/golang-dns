@@ -8,7 +8,7 @@ import (
 
 func main() {
 
-	net.DefaultResolver = server.NewLoopBackNetResolver()
+	net.DefaultResolver = server.NewUdpLoopBackNetResolver()
 
 	names, err := net.LookupHost("dns.google")
 	if err != nil {
