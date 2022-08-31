@@ -27,9 +27,6 @@ var (
 	DnsUrlQuad9       = fmt.Sprintf("https://%s/dns-query", IpQuad9)
 )
 
-//type RestProvider func() service.HardenedResty
-//type DnsResolverProvider func() service.DnsResolver
-
 type DnsResolverParam struct {
 	ServerName string
 	CertFile   string
