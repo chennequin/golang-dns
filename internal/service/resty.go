@@ -41,6 +41,10 @@ func (rt HardenedResty) newRestyClient(serverName, rootCertPemFile string, ip ne
 			MinVersion:             tls.VersionTLS13,
 			SessionTicketsDisabled: false,
 			InsecureSkipVerify:     false,
+			Time: func() time.Time {
+				//TODO return RoughTime
+				return time.Now()
+			},
 			VerifyConnection: func(state tls.ConnectionState) error {
 
 				if err := h.VerifyConnection(serverName, state); err != nil {
