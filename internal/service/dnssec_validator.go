@@ -76,7 +76,8 @@ func (recursion DnssecRecursion) PushToChan(zone string, keyAsyncResult, dsAsync
 }
 
 func (recursion DnssecRecursion) RunVerify(rm model.DnsMsg) error {
-	recursion.RecurseVerify(0, rm.GetDN(), ".")
+	canonical := rm.GetRRSIG().Hdr.Name
+	recursion.RecurseVerify(0, canonical, ".")
 	err := recursion.PopVerify(rm)
 	return err
 }
@@ -108,11 +109,15 @@ func (recursion DnssecRecursion) PopVerify(rm model.DnsMsg) error {
 		}
 
 		if zsk := dnsKeyResp.ByKeyTag(rm.GetRRSIG().KeyTag); zsk != nil {
-			if err = rm.VerifySig(zsk); err != nil {
-				return fmt.Errorf("unable to verify final RRSIG: %s", err.Error())
+			// found a DNSKEY in that zone which has the KeyTag of the final RRSIG
+			// does it verify the RRSIG ?
+			if err = rm.VerifySig(zsk); err == nil {
+				t.Logger().Printf("final RRSIG is valid in zone: %s", zone.zone)
+				return nil
 			}
-			t.Logger().Printf("final signature is valid in zone: %s", zone.zone)
-			return nil
+			// if not continue with the next zone ...
+			// some subdomains (ex: chrome.cloudflare-dns.com.) reuse the keys of their parents
+			// and the final RRSIG will only be valid with the DNSKEY of the final zone.
 		}
 
 		previousDnsKeyResponse = &dnsKeyResp
