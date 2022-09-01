@@ -14,16 +14,16 @@ const (
 )
 
 type DnssecValidator struct {
-	resolver      DnsResolver
+	resolver      DnsResolverProxy
 	asyncResolver AsyncDnsResolver
 	anchors       model.IanaAnchors
 }
 
-func NewDnssecValidator(resolver DnsResolver) DnssecValidator {
+func NewDnssecValidator(resolver DnsResolverProxy) DnssecValidator {
 	return NewDnssecValidatorFromIanaFile(resolver, LoadIanaFile(conf.IanaFile))
 }
 
-func NewDnssecValidatorFromIanaFile(resolver DnsResolver, anchors model.IanaAnchors) DnssecValidator {
+func NewDnssecValidatorFromIanaFile(resolver DnsResolverProxy, anchors model.IanaAnchors) DnssecValidator {
 	var v DnssecValidator
 	defer t.Logger().Printf("%s initialized", &v)
 	v.resolver = resolver
@@ -112,7 +112,7 @@ func (recursion DnssecRecursion) PopVerify(rm model.DnsMsg) error {
 			// found a DNSKEY in that zone which has the KeyTag of the final RRSIG
 			// does it verify the RRSIG ?
 			if err = rm.VerifySig(zsk); err == nil {
-				t.Logger().Printf("final RRSIG is valid in zone: %s", zone.zone)
+				t.LogDnssec("final RRSIG is valid in zone: %s", zone.zone)
 				return nil
 			}
 			// if not continue with the next zone ...

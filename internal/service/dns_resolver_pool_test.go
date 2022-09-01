@@ -7,21 +7,21 @@ import (
 	"testing"
 )
 
-func NewDnsPoolResolver() DnsResolver {
+func NewDnsPoolResolver() DnsResolverProxy {
 	return NewDnsResolverPoolImpl(
 		NewDnsResolverRestyImpl(NewHardenedResty("dns.google", conf.GoogleCertFile, net.IPv4(8, 8, 8, 8)), "https://8.8.8.8/dns-query"),
 		NewDnsResolverRestyImpl(NewHardenedResty("dns.google", conf.GoogleCertFile, net.IPv4(8, 8, 4, 4)), "https://8.8.4.4/dns-query"),
 	)
 }
 
-func NewErroneousDnsPoolResolver() DnsResolver {
+func NewErroneousDnsPoolResolver() DnsResolverProxy {
 	return NewDnsResolverPoolImpl(
 		NewDnsResolverRestyImpl(NewHardenedResty("dns.google", conf.GoogleCertFile, net.IPv4(8, 8, 8, 8)), "https://8.8.8.8/erroneous"),
 		NewDnsResolverRestyImpl(NewHardenedResty("dns.google", conf.GoogleCertFile, net.IPv4(8, 8, 4, 4)), "https://8.8.4.4/dns-query"),
 	)
 }
 
-func NewMalFunctioningDnsPoolResolver() DnsResolver {
+func NewMalFunctioningDnsPoolResolver() DnsResolverProxy {
 	return NewDnsResolverPoolImpl(
 		NewDnsResolverRestyImpl(NewHardenedResty("dns.google", conf.GoogleCertFile, net.IPv4(8, 8, 8, 8)), "https://8.8.8.8/erroneous"),
 		NewDnsResolverRestyImpl(NewHardenedResty("dns.google", conf.GoogleCertFile, net.IPv4(8, 8, 4, 4)), "https://8.8.4.4/erroneous"),
@@ -30,7 +30,7 @@ func NewMalFunctioningDnsPoolResolver() DnsResolver {
 
 func TestDnsPool(t *testing.T) {
 
-	r := NewDnsPoolResolver()
+	r := NewDnsPoolResolver().AsResolver()
 
 	_, err := r.Query("afnic.fr", dns.TypeA)
 	if err != nil {
@@ -42,7 +42,7 @@ func TestDnsPool(t *testing.T) {
 
 func TestDnsPoolResilience(t *testing.T) {
 
-	r := NewErroneousDnsPoolResolver()
+	r := NewErroneousDnsPoolResolver().AsResolver()
 
 	_, err := r.Query("afnic.fr", dns.TypeA)
 	if err != nil {
@@ -54,7 +54,7 @@ func TestDnsPoolResilience(t *testing.T) {
 
 func TestDnsPoolError(t *testing.T) {
 
-	r := NewMalFunctioningDnsPoolResolver()
+	r := NewMalFunctioningDnsPoolResolver().AsResolver()
 
 	_, err := r.Query("afnic.fr", dns.TypeA)
 	if err == nil {

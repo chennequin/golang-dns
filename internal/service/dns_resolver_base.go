@@ -6,33 +6,51 @@ import (
 
 type DnsResolver interface {
 	Query(name string, dnsType uint16) (model.DnsMsg, error)
+}
+
+type DnsResolverProxy interface {
 	Proxy(_ model.DnsMsg) (model.DnsMsg, error)
 	AsAsync() AsyncDnsResolver
-	WithCache() DnsResolver
-	WithDnssec() DnsResolver
-	WithBadger() DnsResolver
+	AsResolver() DnsResolver
+	WithCache() DnsResolverProxy
+	WithDnssec() DnsResolverProxy
+	WithBadger() DnsResolverProxy
+	WithLog() DnsResolverProxy
+	WithRateLimiting() DnsResolverProxy
 }
 
-type DnsResolverBase struct {
-	resolver DnsResolver
+type DnsResolverProxyBase struct {
+	resolver DnsResolverProxy
 }
 
-func (s *DnsResolverBase) initDnsResolverBase(resolver DnsResolver) {
+func (s *DnsResolverProxyBase) initDnsResolverBase(resolver DnsResolverProxy) {
 	s.resolver = resolver
 }
 
-func (s *DnsResolverBase) AsAsync() AsyncDnsResolver {
+func (s *DnsResolverProxyBase) AsAsync() AsyncDnsResolver {
 	return NewAsyncDnsResolverImpl(s.resolver)
 }
 
-func (s *DnsResolverBase) WithCache() DnsResolver {
+func (s *DnsResolverProxyBase) AsResolver() DnsResolver {
+	return NewDnsResolverImpl(s.resolver)
+}
+
+func (s *DnsResolverProxyBase) WithCache() DnsResolverProxy {
 	return NewDnsCache(s.resolver)
 }
 
-func (s *DnsResolverBase) WithDnssec() DnsResolver {
+func (s *DnsResolverProxyBase) WithDnssec() DnsResolverProxy {
 	return NewDnssecResolver(s.resolver, NewDnssecValidator(s.resolver))
 }
 
-func (s *DnsResolverBase) WithBadger() DnsResolver {
+func (s *DnsResolverProxyBase) WithBadger() DnsResolverProxy {
 	return NewBadgerService(s.resolver)
+}
+
+func (s *DnsResolverProxyBase) WithLog() DnsResolverProxy {
+	return NewDnsLog(s.resolver)
+}
+
+func (s *DnsResolverProxyBase) WithRateLimiting() DnsResolverProxy {
+	return NewDnsRateLimiting(s.resolver)
 }

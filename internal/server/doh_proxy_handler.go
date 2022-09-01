@@ -9,12 +9,12 @@ import (
 )
 
 type DnsOverHttpsHandler struct {
-	resolver service.DnsResolver
+	resolver service.DnsResolverProxy
 }
 
 func NewDnsOverHttpsHandler() DnsOverHttpsHandler {
 	return DnsOverHttpsHandler{
-		resolver: providers.NewGoogleDnsPool().WithCache().WithDnssec().WithBadger(),
+		resolver: providers.NewGoogleDnsPool().WithLog().WithCache().WithDnssec().WithBadger().WithRateLimiting(),
 	}
 }
 

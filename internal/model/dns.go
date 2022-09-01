@@ -19,11 +19,32 @@ func NewDnsMsg(m *dns.Msg) DnsMsg {
 	return DnsMsg{m: m}
 }
 
+func (r DnsMsg) WithDNSSEC() DnsMsg {
+
+	r.m.RecursionDesired = true // +rev
+	r.m.CheckingDisabled = false
+
+	o := r.m.IsEdns0()
+	if o == nil {
+		r.m.SetEdns0(4096, true) // +dnssec
+		return r
+	}
+
+	o.SetUDPSize(4096)
+	o.SetDo(true)
+
+	return r
+}
+
 func (r DnsMsg) GetTTL() time.Duration {
 	if len(r.m.Answer) > 0 {
 		return time.Duration(r.m.Answer[0].Header().Ttl) * time.Second
 	}
 	return defaultTTL
+}
+
+func (r DnsMsg) GetQuestion() dns.Question {
+	return r.m.Question[0]
 }
 
 func (r DnsMsg) GetDN() string {

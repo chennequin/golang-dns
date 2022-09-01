@@ -1,66 +1,63 @@
 package model
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/miekg/dns"
+	h "golang-dns/internal/helpers"
 	"strconv"
 	"strings"
 )
 
 type DnsCacheKey string
 
-func (e DnsCacheKey) Decode() (string, uint16) {
+func (e DnsCacheKey) ToDnsMsg() DnsMsg {
+
 	r := strings.Split(string(e), "/")
-	dn := r[0]
-	dnsType, _ := strconv.Atoi(r[1])
-	return dn, uint16(dnsType)
+	n := r[0]
+	t, _ := strconv.Atoi(r[1])
+	clazz, _ := strconv.Atoi(r[2])
+
+	msg := NewDnsMsg(h.Msg(n, uint16(t), uint16(clazz)))
+	return msg
 }
 
-func NewDnsCacheKey(name string, dnsType uint16) string {
-	return fmt.Sprintf("%s/%d", name, dnsType)
+func NewDnsCacheKey(msg DnsMsg) string {
+	q := msg.GetQuestion()
+	return fmt.Sprintf("%s/%d/%d", q.Name, q.Qtype, q.Qclass)
 }
 
 /********************/
 
 type DnsRistrettoEntry struct {
-	name     string
-	dnsType  uint16
-	response DnsMsg
+	msg []byte
 }
 
-func (e DnsRistrettoEntry) Value() DnsMsg {
-	return e.response
+func NewDnsRistrettoEntry(m DnsMsg) (DnsRistrettoEntry, error) {
+	var entry DnsRistrettoEntry
+	msg, err := m.GetMsg().Pack()
+	entry.msg = msg
+	return entry, err
 }
 
-func (e DnsRistrettoEntry) String() string {
-	return fmt.Sprintf("{m:%v}", e.response.GetMsg())
-}
-
-func NewDnsRistrettoEntry(r DnsMsg) DnsRistrettoEntry {
-	return DnsRistrettoEntry{
-		response: r,
-	}
+func (e DnsRistrettoEntry) Value() (DnsMsg, error) {
+	in := new(dns.Msg)
+	err := in.Unpack(e.msg)
+	return NewDnsMsg(in), err
 }
 
 /********************/
 
 type DnsBadgerEntry struct {
-	name    string
-	dnsType uint16
-	msg     dns.Msg
+	msg []byte
 }
 
-func (e DnsBadgerEntry) String() string {
-	return fmt.Sprintf("{m:%v}", e.msg)
+func NewDnsBadgerEntry(m DnsMsg) (DnsBadgerEntry, error) {
+	var entry DnsBadgerEntry
+	msg, err := m.GetMsg().Pack()
+	entry.msg = msg
+	return entry, err
 }
 
-func (e DnsBadgerEntry) AsBytes() ([]byte, error) {
-	return json.Marshal(e.msg)
-}
-
-func NewDnsBadgerEntry(m *dns.Msg) DnsBadgerEntry {
-	return DnsBadgerEntry{
-		msg: *m,
-	}
+func (e DnsBadgerEntry) AsBytes() []byte {
+	return e.msg
 }

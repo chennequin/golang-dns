@@ -8,9 +8,9 @@ import (
 )
 
 func main() {
-	resolver := providers.NewGoogleDnsPool().WithCache().WithDnssec()
+	resolver := providers.NewQuad9DnsPool().WithLog().WithCache().WithDnssec().WithRateLimiting().AsResolver()
 
-	rr, err := resolver.Query("_dmarc.icourrier.fr", dns.TypeTXT)
+	rr, err := resolver.Query("dns.google.", dns.TypeA)
 	if err != nil {
 		log.Fatal(err)
 	}

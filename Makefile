@@ -11,3 +11,6 @@ stop:
 
 debug:
 	docker run --entrypoint=sh -ti --mount source=udp-proxy,target=/tmp udp-proxy
+
+verify:
+	cosign verify --key cosign.pub gcr.io/distroless/static-debian11

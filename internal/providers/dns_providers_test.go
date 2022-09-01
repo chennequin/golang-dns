@@ -21,7 +21,7 @@ func TestProvidersAll(t *testing.T) {
 	for _, pool := range pools {
 		for _, p := range pool {
 
-			resolver := service.NewDnsResolverRestyImpl(service.NewHardenedResty(p.ServerName, p.CertFile, p.ip), p.Url).WithDnssec()
+			resolver := service.NewDnsResolverRestyImpl(service.NewHardenedResty(p.ServerName, p.CertFile, p.ip), p.Url).WithDnssec().AsResolver()
 			resp, err := resolver.Query("dns.google", dns.TypeA)
 
 			expectNoErr(t, err)
@@ -63,6 +63,6 @@ func TestProvidersAll(t *testing.T) {
 
 func expectNoErr(t *testing.T, err error) {
 	if err != nil {
-		t.Fatalf("got error %v", err.Error())
+		t.Fatalf("got error: %v", err.Error())
 	}
 }

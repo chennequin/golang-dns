@@ -12,7 +12,7 @@ import (
 //go:embed conf/dns/fake-anchors.xml
 var FakeAnchorsFile string
 
-func NewDnsSecResolver() DnsResolver {
+func NewDnsSecResolver() DnsResolverProxy {
 	return NewDnsResolverRestyImpl(NewHardenedResty("dns.google", conf.GoogleCertFile, net.IPv4(8, 8, 8, 8)), "https://8.8.8.8/dns-query")
 }
 
@@ -31,8 +31,9 @@ func TestDnssecValid(t *testing.T) {
 		{"_dmarc.icourrier.fr", dns.TypeTXT},
 	}
 
-	resolver := NewDnsSecResolver()
-	validator := NewDnssecValidator(resolver)
+	proxy := NewDnsSecResolver()
+	validator := NewDnssecValidator(proxy)
+	resolver := proxy.AsResolver()
 
 	for _, tt := range tests {
 		r, err := resolver.Query(tt.name, tt.dnsType)
@@ -71,8 +72,9 @@ func TestDnssecInvalid(t *testing.T) {
 		{"afnic.fr", dns.TypeTXT},
 	}
 
-	resolver := NewDnsSecResolver()
-	validator := NewDnssecValidatorFromIanaFile(resolver, LoadIanaFile(FakeAnchorsFile))
+	proxy := NewDnsSecResolver()
+	validator := NewDnssecValidatorFromIanaFile(proxy, LoadIanaFile(FakeAnchorsFile))
+	resolver := proxy.AsResolver()
 
 	for _, tt := range tests {
 		r, err := resolver.Query(tt.name, tt.dnsType)

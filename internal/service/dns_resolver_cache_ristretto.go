@@ -3,18 +3,17 @@ package service
 import (
 	"fmt"
 	"github.com/dgraph-io/ristretto"
-	h "golang-dns/internal/helpers"
 	"golang-dns/internal/model"
 	"golang-dns/internal/transverse"
 )
 
 type DnsCache struct {
-	DnsResolverBase
-	resolver DnsResolver
+	DnsResolverProxyBase
+	resolver DnsResolverProxy
 	cache    *ristretto.Cache
 }
 
-func NewDnsCache(resolver DnsResolver) DnsResolver {
+func NewDnsCache(resolver DnsResolverProxy) DnsResolverProxy {
 
 	var rsv DnsCache
 
@@ -36,19 +35,19 @@ func NewDnsCache(resolver DnsResolver) DnsResolver {
 	return &rsv
 }
 
-func (rsv DnsCache) Query(name string, dnsType uint16) (model.DnsMsg, error) {
-	rm := model.NewDnsMsg(h.Msg(name, dnsType))
-	return rsv.Proxy(rm)
-}
-
 func (rsv DnsCache) Proxy(rm model.DnsMsg) (model.DnsMsg, error) {
 
-	key := model.NewDnsCacheKey(rm.GetDN(), rm.GetDnsType())
+	key := model.NewDnsCacheKey(rm)
 	value, found := rsv.cache.Get(key)
 	if !found {
 		nrm, err := rsv.resolver.Proxy(rm)
 		if err == nil {
-			rsv.cache.SetWithTTL(key, model.NewDnsRistrettoEntry(nrm), 1, nrm.GetTTL())
+			entry, err := model.NewDnsRistrettoEntry(nrm)
+			if err != nil {
+				transverse.LoggerError().Printf("unable to pack ristretto entry: %s", err.Error())
+				return nrm, nil
+			}
+			rsv.cache.SetWithTTL(key, entry, 1, nrm.GetTTL())
 			rsv.cache.Wait()
 		}
 		return nrm, err
@@ -56,7 +55,10 @@ func (rsv DnsCache) Proxy(rm model.DnsMsg) (model.DnsMsg, error) {
 
 	// adapt to the id of the request avoiding errors like
 	// ;; Warning: ID mismatch: expected ID 34825, got 13184
-	nrm := value.(model.DnsRistrettoEntry).Value()
+	nrm, err := value.(model.DnsRistrettoEntry).Value()
+	if err != nil {
+		return nrm, fmt.Errorf("found corrupted ristretto entry: %s", err.Error())
+	}
 	nrm.GetMsg().Id = rm.GetMsg().Id
 
 	return nrm, nil

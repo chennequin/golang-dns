@@ -2,27 +2,21 @@ package service
 
 import (
 	"fmt"
-	h "golang-dns/internal/helpers"
 	"golang-dns/internal/model"
 	"golang-dns/internal/transverse"
 )
 
 type DnsResolverPoolImpl struct {
-	DnsResolverBase
-	resolvers []DnsResolver
+	DnsResolverProxyBase
+	resolvers []DnsResolverProxy
 }
 
-func NewDnsResolverPoolImpl(resolvers ...DnsResolver) DnsResolver {
+func NewDnsResolverPoolImpl(resolvers ...DnsResolverProxy) DnsResolverProxy {
 	var rsv DnsResolverPoolImpl
 	defer transverse.Logger().Printf("%s initialized", &rsv)
 	defer rsv.initDnsResolverBase(&rsv)
 	rsv.resolvers = resolvers
 	return &rsv
-}
-
-func (rsv DnsResolverPoolImpl) Query(name string, dnsType uint16) (model.DnsMsg, error) {
-	rm := model.NewDnsMsg(h.Msg(name, dnsType))
-	return rsv.Proxy(rm)
 }
 
 func (rsv DnsResolverPoolImpl) Proxy(rm model.DnsMsg) (model.DnsMsg, error) {

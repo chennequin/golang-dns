@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func NewDnsResolver() DnsResolver {
+func NewDnsResolver() DnsResolverProxy {
 	return NewDnsResolverRestyImpl(NewHardenedResty("dns.google", conf.GoogleCertFile, net.IPv4(8, 8, 8, 8)), "https://8.8.8.8/dns-query")
 }
 
@@ -17,7 +17,7 @@ func TestDnsResolverAll(t *testing.T) {
 	transverse.SetTest()
 
 	tests := []struct {
-		provider func() DnsResolver
+		provider func() DnsResolverProxy
 		name     string
 		dnsType  uint16
 		dnsSec   bool
@@ -35,7 +35,7 @@ func TestDnsResolverAll(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		r := tt.provider()
+		r := tt.provider().AsResolver()
 		m, err := r.Query(tt.name, tt.dnsType)
 		if err != nil {
 			t.Fatalf("received error: %v", err.Error())

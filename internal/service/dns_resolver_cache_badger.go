@@ -3,7 +3,6 @@ package service
 import (
 	"fmt"
 	"github.com/dgraph-io/badger/v3"
-	h "golang-dns/internal/helpers"
 	"golang-dns/internal/model"
 	"golang-dns/internal/transverse"
 	"log"
@@ -13,17 +12,18 @@ import (
 const (
 	path       = "/tmp/badger"
 	defaultTTL = 24 * time.Hour
+	workers    = 10
 )
 
 type BadgerService struct {
-	DnsResolverBase
-	resolver DnsResolver
+	DnsResolverProxyBase
+	resolver DnsResolverProxy
 	db       *badger.DB
 	w        chan model.DnsMsg
 	r        chan model.DnsCacheKey
 }
 
-func NewBadgerService(resolver DnsResolver) DnsResolver {
+func NewBadgerService(resolver DnsResolverProxy) DnsResolverProxy {
 	var b BadgerService
 	defer transverse.Logger().Printf("%s initialized", &b)
 	defer b.initDnsResolverBase(&b)
@@ -52,11 +52,6 @@ func NewBadgerService(resolver DnsResolver) DnsResolver {
 	return &b
 }
 
-func (b BadgerService) Query(name string, dnsType uint16) (model.DnsMsg, error) {
-	rm := model.NewDnsMsg(h.Msg(name, dnsType))
-	return b.Proxy(rm)
-}
-
 func (b BadgerService) Proxy(rm model.DnsMsg) (model.DnsMsg, error) {
 
 	proxy, err := b.resolver.Proxy(rm)
@@ -81,16 +76,17 @@ func (b BadgerService) ContinuouslyStore() {
 }
 
 func (b BadgerService) ContinuouslyRead() {
-	go func() {
-		for {
-			k := <-b.r
-			_, err := b.resolver.Query(k.Decode())
-			if err != nil {
-				transverse.LoggerError().Printf("unable to query resolver: %s", err.Error())
-				continue
+	for i := 0; i < workers; i++ {
+		go func() {
+			for k := range b.r {
+				_, err := b.resolver.Proxy(k.ToDnsMsg())
+				if err != nil {
+					transverse.LoggerError().Printf("unable to query resolver: %s", err.Error())
+					continue
+				}
 			}
-		}
-	}()
+		}()
+	}
 }
 
 func (b BadgerService) IteratePushOverKeys() error {
@@ -98,13 +94,20 @@ func (b BadgerService) IteratePushOverKeys() error {
 	transverse.Logger().Println("Iterating over keys")
 
 	err := b.db.View(func(txn *badger.Txn) error {
+
 		opts := badger.DefaultIteratorOptions
 		opts.PrefetchValues = false
 		it := txn.NewIterator(opts)
 		defer it.Close()
+
+		// iterate over all keys
 		for it.Rewind(); it.Valid(); it.Next() {
 			b.r <- model.DnsCacheKey(it.Item().Key())
 		}
+
+		// close channel hence terminating the ContinuouslyRead() function
+		close(b.r)
+
 		return nil
 	})
 
@@ -117,14 +120,14 @@ func (b BadgerService) IteratePushOverKeys() error {
 
 func (b BadgerService) StoreEntry(db *badger.DB, rm model.DnsMsg) error {
 
-	key := model.NewDnsCacheKey(rm.GetDN(), rm.GetDnsType())
+	key := model.NewDnsCacheKey(rm)
 
 	err := db.Update(func(txn *badger.Txn) error {
-		entry, err := model.NewDnsBadgerEntry(rm.GetMsg()).AsBytes()
+		entry, err := model.NewDnsBadgerEntry(rm)
 		if err != nil {
-			return fmt.Errorf("error marshalling msg %s", err.Error())
+			return fmt.Errorf("error packing badger msg %s", err.Error())
 		}
-		e := badger.NewEntry([]byte(key), entry).WithTTL(defaultTTL)
+		e := badger.NewEntry([]byte(key), entry.AsBytes()).WithTTL(defaultTTL)
 		return txn.SetEntry(e)
 	})
 

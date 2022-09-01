@@ -10,12 +10,12 @@ import (
 )
 
 type DnsResolverRestyImpl struct {
-	DnsResolverBase
+	DnsResolverProxyBase
 	client HardenedResty
 	url    string
 }
 
-func NewDnsResolverRestyImpl(client HardenedResty, url string) DnsResolver {
+func NewDnsResolverRestyImpl(client HardenedResty, url string) DnsResolverProxy {
 	var rsv DnsResolverRestyImpl
 	defer transverse.Logger().Printf("%s initialized", &rsv)
 	defer rsv.initDnsResolverBase(&rsv)
@@ -24,28 +24,12 @@ func NewDnsResolverRestyImpl(client HardenedResty, url string) DnsResolver {
 	return &rsv
 }
 
-func (rsv DnsResolverRestyImpl) Query(name string, dnsType uint16) (model.DnsMsg, error) {
-
-	rm := model.NewDnsMsg(h.Msg(name, dnsType))
-
-	if _, valid := dns.IsDomainName(name); !valid {
-		return rm, fmt.Errorf("must provide a valid domain name")
-	}
-
-	in, err := rsv.Proxy(rm)
-	return in, err
-}
-
 func (rsv DnsResolverRestyImpl) Proxy(rm model.DnsMsg) (model.DnsMsg, error) {
-	transverse.Logger().Printf("%s", rm.GetMsg().Question[0].String())
-	in, err := rsv.packPostUnpack(rm.GetMsg())
+	in, err := rsv.packPostUnpack(rm.WithDNSSEC().GetMsg())
 	return model.NewDnsMsg(in), err
 }
 
 func (rsv DnsResolverRestyImpl) packPostUnpack(m *dns.Msg) (*dns.Msg, error) {
-
-	m.RecursionDesired = true // +rev
-	m.SetEdns0(4096, true)    // +dnssec
 
 	b, err := m.Pack()
 	if err != nil {
@@ -70,6 +54,7 @@ func (rsv DnsResolverRestyImpl) packPostUnpack(m *dns.Msg) (*dns.Msg, error) {
 	// this client does not handler recursive queries.
 	// reject the answer if recursion is not available on the server side.
 	if !in.MsgHdr.RecursionAvailable ||
+		in.MsgHdr.Truncated ||
 		in.MsgHdr.CheckingDisabled {
 		return in, fmt.Errorf("not acceptable response received %+v", in.MsgHdr)
 	}

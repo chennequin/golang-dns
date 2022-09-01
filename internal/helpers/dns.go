@@ -5,11 +5,13 @@ import (
 	"strings"
 )
 
-func Msg(name string, dnsType uint16) *dns.Msg {
+func Msg(name string, dnsType, dnsClass uint16) *dns.Msg {
 	m := new(dns.Msg)
 	m.Id = dns.Id()
 	m.RecursionDesired = true
-	m.SetQuestion(dns.Fqdn(name), dnsType)
+	m.CheckingDisabled = false
+	m.Question = make([]dns.Question, 1)
+	m.Question[0] = dns.Question{Name: dns.Fqdn(name), Qtype: dnsType, Qclass: dnsClass}
 	m.SetEdns0(4096, true)
 	return m
 }
