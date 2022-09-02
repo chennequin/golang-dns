@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/miekg/dns"
 	"time"
 )
 
@@ -32,4 +33,14 @@ func (k IanaKeyDigest) validityPeriod(t time.Time) bool {
 		return t.After(k.ValidFrom)
 	}
 	return t.After(k.ValidFrom) && t.Before(k.ValidUntil)
+}
+
+func (k IanaKeyDigest) ToDS() *dns.DS {
+	return &dns.DS{
+		Hdr:        dns.RR_Header{},
+		KeyTag:     k.KeyTag,
+		Algorithm:  k.Algorithm,
+		DigestType: k.DigestType,
+		Digest:     k.Digest,
+	}
 }

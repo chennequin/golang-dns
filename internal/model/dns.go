@@ -48,6 +48,9 @@ func (r DnsMsg) GetQuestion() dns.Question {
 }
 
 func (r DnsMsg) GetDN() string {
+	for _, v := range r.m.Answer {
+		return v.Header().Name
+	}
 	return r.m.Question[0].Name
 }
 
@@ -63,15 +66,35 @@ func (r DnsMsg) GetRR() []dns.RR {
 	return h.CollectAll(r.m.Answer, r.GetDnsType())
 }
 
-func (r DnsMsg) GetDNSKEY() []dns.RR {
-	return h.CollectAll(r.m.Answer, dns.TypeDNSKEY)
+func (r DnsMsg) GetDNSKEY() []*dns.DNSKEY {
+	dnsKeys := make([]*dns.DNSKEY, 0, 10)
+	for _, v := range r.m.Answer {
+		if v.Header().Rrtype == dns.TypeDNSKEY {
+			dnsKeys = append(dnsKeys, v.(*dns.DNSKEY))
+		}
+	}
+	return dnsKeys
 }
 
-func (r DnsMsg) GetRRSIG() *dns.RRSIG {
-	if rrsig := h.CollectOne(r.m.Answer, dns.TypeRRSIG); rrsig != nil {
-		return rrsig.(*dns.RRSIG)
+func (r DnsMsg) ByKeyTag(keyTag uint16) *dns.DNSKEY {
+	for _, v := range r.m.Answer {
+		if t, ok := v.(*dns.DNSKEY); ok {
+			if t.KeyTag() == keyTag {
+				return t
+			}
+		}
 	}
 	return nil
+}
+
+func (r DnsMsg) GetRRSIG() []*dns.RRSIG {
+	rrsig := make([]*dns.RRSIG, 0, 10)
+	for _, v := range r.m.Answer {
+		if v.Header().Rrtype == dns.TypeRRSIG {
+			rrsig = append(rrsig, v.(*dns.RRSIG))
+		}
+	}
+	return rrsig
 }
 
 func (r DnsMsg) GetDS() *dns.DS {
@@ -82,19 +105,11 @@ func (r DnsMsg) GetDS() *dns.DS {
 }
 
 func (r DnsMsg) IsRRSIG() bool {
-	return r.GetRRSIG() != nil
+	return len(r.GetRRSIG()) > 0
 }
 
 func (r DnsMsg) IsEmpty() bool {
 	return r.m.Answer == nil
-}
-
-func (r DnsMsg) AsDsResponse() DsMsg {
-	return NewDnsDsResponse(r.m)
-}
-
-func (r DnsMsg) AsDnsKeyResponse() DnsKeyMsg {
-	return NewDnsKeyResponse(r.m)
 }
 
 func (r DnsMsg) String() string {

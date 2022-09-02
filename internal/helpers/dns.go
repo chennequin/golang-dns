@@ -35,16 +35,6 @@ func CollectOne(rrset []dns.RR, dnsType uint16) dns.RR {
 	return nil
 }
 
-func AsDnsKeyMap(rrset []dns.RR) map[uint16]*dns.DNSKEY {
-	dnsKeysMap := make(map[uint16]*dns.DNSKEY, 2)
-	for _, v := range rrset {
-		if t, ok := v.(*dns.DNSKEY); ok {
-			dnsKeysMap[t.KeyTag()] = t
-		}
-	}
-	return dnsKeysMap
-}
-
 func SubZone(domain string, i int) string {
 
 	if i == 0 {
