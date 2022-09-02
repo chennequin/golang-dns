@@ -2,7 +2,7 @@
 FROM golang:1.18 as build
 WORKDIR /go/src/app
 COPY . ./
-RUN go mod download
+RUN go mod download && go mod verify
 RUN go test ./...
 RUN CGO_ENABLED=0 go build -a -ldflags '-extldflags "-static"' -o /go/bin/udp-proxy ./cmd/server/
 
