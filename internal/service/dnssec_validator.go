@@ -78,7 +78,7 @@ func (recursion DnssecRecursion) PushToChan(zone string, keyAsyncResult, dsAsync
 }
 
 func (recursion DnssecRecursion) RunVerify(rm model.DnsMsg) error {
-	dn := rm.GetDN()
+	dn := rm.GetRrsigDN()
 	recursion.Recurse(0, dn, ".")
 	err := recursion.Verify(rm)
 	return err

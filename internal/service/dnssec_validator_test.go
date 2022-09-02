@@ -28,7 +28,12 @@ func TestDnssecValid(t *testing.T) {
 		{"afnic.fr", dns.TypeA},
 		{"afnic.fr", dns.TypeMX},
 		{"afnic.fr", dns.TypeTXT},
+		{"icourrier.fr", dns.TypeMX},
 		{"_dmarc.icourrier.fr", dns.TypeTXT},
+		{"chrome.cloudflare-dns.com.", dns.TypeA},
+		{"protonvpn.ch.", dns.TypeA},
+		{"client.dropbox.com.", dns.TypeA},
+		{"api.dropboxapi.com.", dns.TypeA},
 	}
 
 	proxy := NewDnsSecResolver()
@@ -73,7 +78,7 @@ func TestDnssecInvalid(t *testing.T) {
 	}
 
 	proxy := NewDnsSecResolver()
-	validator := NewDnssecValidatorFromIanaFile(proxy, LoadIanaFile(FakeAnchorsFile))
+	validator := NewDnssecValidatorFromIanaFile(proxy, LoadIanaFile(FakeAnchorsFile)) // fake anchors
 	resolver := proxy.AsResolver()
 
 	for _, tt := range tests {

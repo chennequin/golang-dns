@@ -47,11 +47,16 @@ func (r DnsMsg) GetQuestion() dns.Question {
 	return r.m.Question[0]
 }
 
-func (r DnsMsg) GetDN() string {
+func (r DnsMsg) GetRrsigDN() string {
+	target := r.m.Question[0].Name
 	for _, v := range r.m.Answer {
-		return v.Header().Name
+		if t, ok := v.(*dns.RRSIG); ok {
+			target = t.Hdr.Name
+			break
+		}
+		target = v.Header().Name
 	}
-	return r.m.Question[0].Name
+	return target
 }
 
 func (r DnsMsg) GetDnsType() uint16 {
