@@ -34,6 +34,10 @@ func TestDnssecValid(t *testing.T) {
 		{"protonvpn.ch.", dns.TypeA},
 		{"client.dropbox.com.", dns.TypeA},
 		{"api.dropboxapi.com.", dns.TypeA},
+		{"dns.google", dns.TypeA},
+		{"cloudflare-dns.com", dns.TypeA},
+		//{"quad9.net.", dns.TypeA},
+		//{"dns.quad9.net.", dns.TypeA},
 	}
 
 	proxy := NewDnsSecResolver()
