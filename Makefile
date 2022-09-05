@@ -3,7 +3,7 @@ docker:
 	docker build -t udp-proxy .
 
 start:
-	docker run -d -p 127.0.0.1:53:53/udp --name udp-proxy --mount source=udp-proxy,target=/tmp udp-proxy:latest
+	docker run -d -p 127.0.0.1:53:53/udp --name udp-proxy --mount source=udp-proxy,target=/tmp --restart=always udp-proxy:latest
 
 stop:
 	docker container stop udp-proxy
