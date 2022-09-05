@@ -38,6 +38,7 @@ func TestDnssecValid(t *testing.T) {
 		{"cloudflare-dns.com", dns.TypeA},
 		//{"quad9.net.", dns.TypeA},
 		//{"dns.quad9.net.", dns.TypeA},
+		//{"ocsp.pki.goog.", dns.TypeA},
 	}
 
 	proxy := NewDnsSecResolver()

@@ -68,5 +68,5 @@ func (b Badger) Close() {
 }
 
 func (b Badger) String() string {
-	return fmt.Sprintf("DnsCacheBadger %s", path)
+	return fmt.Sprintf("Badger %s", path)
 }

@@ -66,5 +66,5 @@ func (b DnsCacheBadger) ContinuouslyStore() {
 }
 
 func (b DnsCacheBadger) String() string {
-	return fmt.Sprintf("DnsCacheBadger %s", path)
+	return fmt.Sprintf("DnsCacheBadger")
 }

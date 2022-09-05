@@ -8,9 +8,9 @@ import (
 )
 
 func main() {
-	resolver := providers.NewQuad9DnsPool().WithLog().WithCache().WithDnssec().WithRateLimiting().AsResolver()
+	resolver := providers.NewGoogleDnsPool().WithLog().WithCache().WithDnssec().WithRateLimiting().AsResolver()
 
-	rr, err := resolver.Query("quad9.net.", dns.TypeA)
+	rr, err := resolver.Query("ocsp.pki.goog.", dns.TypeA)
 	if err != nil {
 		log.Fatal(err)
 	}
