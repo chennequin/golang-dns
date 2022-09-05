@@ -2,11 +2,12 @@ package server
 
 import (
 	"github.com/miekg/dns"
+	"golang-dns/internal/service"
 	t "golang-dns/internal/transverse"
 	"net"
 )
 
-func RunLocalUDPServer(network, addr string) error {
+func RunLocalUDPServer(network, addr string, resolver service.DnsResolverProxy) error {
 
 	pc, err := net.ListenPacket(network, addr)
 	if err != nil {
@@ -15,7 +16,7 @@ func RunLocalUDPServer(network, addr string) error {
 
 	server := &dns.Server{
 		PacketConn: pc,
-		Handler:    NewDnsOverHttpsHandler(),
+		Handler:    NewDnsOverHttpsHandler(resolver),
 		NotifyStartedFunc: func() {
 			t.Logger().Printf("server started %s%s", network, addr)
 		},

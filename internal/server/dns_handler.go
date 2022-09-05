@@ -3,7 +3,6 @@ package server
 import (
 	"github.com/miekg/dns"
 	"golang-dns/internal/model"
-	"golang-dns/internal/providers"
 	"golang-dns/internal/service"
 	t "golang-dns/internal/transverse"
 )
@@ -12,9 +11,9 @@ type DnsOverHttpsHandler struct {
 	resolver service.DnsResolverProxy
 }
 
-func NewDnsOverHttpsHandler() DnsOverHttpsHandler {
+func NewDnsOverHttpsHandler(resolver service.DnsResolverProxy) DnsOverHttpsHandler {
 	return DnsOverHttpsHandler{
-		resolver: providers.NewGoogleDnsPool().WithLog().WithCache().WithDnssec().WithBadger(service.NewBadger()).WithRateLimiting(),
+		resolver: resolver,
 	}
 }
 
