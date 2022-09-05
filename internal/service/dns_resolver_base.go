@@ -14,7 +14,7 @@ type DnsResolverProxy interface {
 	AsResolver() DnsResolver
 	WithCache() DnsResolverProxy
 	WithDnssec() DnsResolverProxy
-	WithBadger() DnsResolverProxy
+	WithBadger(db Badger) DnsResolverProxy
 	WithLog() DnsResolverProxy
 	WithRateLimiting() DnsResolverProxy
 }
@@ -36,15 +36,15 @@ func (s *DnsResolverProxyBase) AsResolver() DnsResolver {
 }
 
 func (s *DnsResolverProxyBase) WithCache() DnsResolverProxy {
-	return NewDnsCache(s.resolver)
+	return NewDnsCacheRistretto(s.resolver)
 }
 
 func (s *DnsResolverProxyBase) WithDnssec() DnsResolverProxy {
 	return NewDnssecResolver(s.resolver, NewDnssecValidator(s.resolver))
 }
 
-func (s *DnsResolverProxyBase) WithBadger() DnsResolverProxy {
-	return NewBadgerService(s.resolver)
+func (s *DnsResolverProxyBase) WithBadger(db Badger) DnsResolverProxy {
+	return NewDnsCacheBadger(s.resolver, db)
 }
 
 func (s *DnsResolverProxyBase) WithLog() DnsResolverProxy {

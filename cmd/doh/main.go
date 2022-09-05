@@ -10,7 +10,7 @@ import (
 func main() {
 	resolver := providers.NewQuad9DnsPool().WithLog().WithCache().WithDnssec().WithRateLimiting().AsResolver()
 
-	rr, err := resolver.Query("api.dropboxapi.com.", dns.TypeA)
+	rr, err := resolver.Query("quad9.net.", dns.TypeA)
 	if err != nil {
 		log.Fatal(err)
 	}

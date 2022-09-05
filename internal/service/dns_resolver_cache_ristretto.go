@@ -7,15 +7,15 @@ import (
 	"golang-dns/internal/transverse"
 )
 
-type DnsCache struct {
+type DnsCacheRistretto struct {
 	DnsResolverProxyBase
 	resolver DnsResolverProxy
 	cache    *ristretto.Cache
 }
 
-func NewDnsCache(resolver DnsResolverProxy) DnsResolverProxy {
+func NewDnsCacheRistretto(resolver DnsResolverProxy) DnsResolverProxy {
 
-	var rsv DnsCache
+	var rsv DnsCacheRistretto
 
 	defer transverse.Logger().Printf("%s initialized", &rsv)
 	defer rsv.initDnsResolverBase(&rsv)
@@ -35,7 +35,7 @@ func NewDnsCache(resolver DnsResolverProxy) DnsResolverProxy {
 	return &rsv
 }
 
-func (rsv DnsCache) Proxy(rm model.DnsMsg) (model.DnsMsg, error) {
+func (rsv DnsCacheRistretto) Proxy(rm model.DnsMsg) (model.DnsMsg, error) {
 
 	key := model.NewDnsCacheKey(rm)
 	value, found := rsv.cache.Get(key)
@@ -65,6 +65,6 @@ func (rsv DnsCache) Proxy(rm model.DnsMsg) (model.DnsMsg, error) {
 
 }
 
-func (_ DnsCache) String() string {
-	return fmt.Sprintf("DnsCache")
+func (_ DnsCacheRistretto) String() string {
+	return fmt.Sprintf("DnsCacheRistretto")
 }
