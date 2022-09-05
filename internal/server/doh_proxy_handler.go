@@ -14,7 +14,7 @@ type DnsOverHttpsHandler struct {
 
 func NewDnsOverHttpsHandler() DnsOverHttpsHandler {
 	return DnsOverHttpsHandler{
-		resolver: providers.NewGoogleDnsPool().WithLog().WithCache().WithDnssec().WithBadger().WithRateLimiting(),
+		resolver: providers.NewGoogleDnsPool().WithLog().WithCache().WithDnssec().WithBadger(service.NewBadger()).WithRateLimiting(),
 	}
 }
 
@@ -25,9 +25,15 @@ func (h DnsOverHttpsHandler) ServeDNS(w dns.ResponseWriter, req *dns.Msg) {
 
 	if err != nil {
 		t.LoggerError().Printf("error in resolver: %s", err.Error())
+		h.WriteMsg(w, req)
+		return
 	}
 
-	if err = w.WriteMsg(rm.GetMsg()); err != nil {
+	h.WriteMsg(w, rm.GetMsg())
+}
+
+func (h DnsOverHttpsHandler) WriteMsg(w dns.ResponseWriter, m *dns.Msg) {
+	if err := w.WriteMsg(m); err != nil {
 		t.LoggerError().Printf("error in WriteMsg: %s", err.Error())
 	}
 }
