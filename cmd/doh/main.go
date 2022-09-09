@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	resolver := providers.NewGoogleDnsPool().WithLog().WithCache().WithDnssec().WithRateLimiting().AsResolver()
+	resolver := providers.NewGoogleDnsPool().WithCache().WithDnssec().WithLog().WithRateLimiting().AsResolver()
 
 	rr, err := resolver.Query("ocsp.pki.goog.", dns.TypeA)
 	if err != nil {

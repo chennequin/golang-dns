@@ -1,5 +1,5 @@
 
-docker:
+build:
 	docker build -t udp-proxy .
 
 start:
@@ -8,6 +8,10 @@ start:
 stop:
 	docker container stop udp-proxy
 	docker container prune -f
+
+restart: stop start
+
+deploy: build restart
 
 debug:
 	docker run --entrypoint=sh -ti --mount source=udp-proxy,target=/tmp udp-proxy

@@ -9,7 +9,7 @@ import (
 
 func main() {
 
-	resolver := providers.NewGoogleDnsPool().WithLog().WithCache().WithDnssec().WithBadger(service.NewBadger()).WithRateLimiting()
+	resolver := providers.NewGoogleDnsPool().WithCache().WithDnssec().WithBadger(service.NewBadger()).WithLog().WithRateLimiting()
 
 	//go func() { server.StartGin(resolver) }()
 
