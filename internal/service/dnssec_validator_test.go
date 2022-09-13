@@ -36,8 +36,9 @@ func TestDnssecValid(t *testing.T) {
 		{"api.dropboxapi.com.", dns.TypeA},
 		{"dns.google", dns.TypeA},
 		{"cloudflare-dns.com", dns.TypeA},
-		//{"quad9.net.", dns.TypeA},
-		//{"dns.quad9.net.", dns.TypeA},
+		{"quad9.net.", dns.TypeA},
+		{"paypal.com.", dns.TypeA},
+		{"dns.quad9.net.", dns.TypeA},
 		//{"ocsp.pki.goog.", dns.TypeA},
 	}
 

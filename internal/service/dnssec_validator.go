@@ -173,6 +173,18 @@ func (recursion DnssecRecursion) VerifyZone(zone string, dnsKeyResp model.DnsMsg
 
 		// ------ BEGIN DS VALIDATION ------
 		t.LogDnssec("zone %s : verifying DS RRSIG", zone)
+
+		if dsResp.IsEmpty() {
+			// check presence of NSEC3
+			if err := VerifyNsec3(dsResp, parentDnsKeyResp); err != nil {
+				return fmt.Errorf("zone: %s : invalid DS: invalid NSEC3: %s", zone, err.Error())
+			}
+
+			// We have proof of non-existence of the DS record
+			// hence there is nothing to verify.
+			return nil
+		}
+
 		if err := VerifySignature(parentDnsKeyResp, dsResp); err != nil {
 			return fmt.Errorf("zone: %s : invalid DS: %s", zone, err.Error())
 		}
@@ -191,6 +203,81 @@ func (recursion DnssecRecursion) VerifyZone(zone string, dnsKeyResp model.DnsMsg
 	}
 
 	return nil
+}
+
+func VerifyNsec3(m model.DnsMsg, parentDnsKeyResp model.DnsMsg) error {
+
+	nsec3 := m.GetNSEC3()
+	name := m.GetQuestion().Name
+
+	if len(nsec3) == 0 {
+		return fmt.Errorf("no NSEC3 record found")
+	}
+
+	// An NSEC3 record that *matches* the "closest encloser".
+	encloser := FindClosestEncloser(0, ".", name, m.GetNSEC3())
+	if encloser == "" {
+		return fmt.Errorf(fmt.Sprintf("NSEC3 does not matche closest encloser: %s", encloser))
+	}
+	t.LogDnssec(fmt.Sprintf("NSEC3 matches closest encloser: %s", encloser))
+
+	// An NSEC3 record that *covers* the "next closer name".
+	{
+		if !Nsec3Covers(name, nsec3) {
+			return fmt.Errorf(fmt.Sprintf("NSEC3 does not cover next closer name: %s", encloser))
+		}
+		t.LogDnssec(fmt.Sprintf("NSEC3 covers next closer name: %s", name))
+	}
+
+	// "*.<closest encloser>"
+	{
+		wildCard := "*." + encloser
+		if len(nsec3) > 2 && !Nsec3Covers(wildCard, nsec3) {
+			return fmt.Errorf(fmt.Sprintf("NSEC3 does not covers wildcard: %s", wildCard))
+		}
+		t.LogDnssec(fmt.Sprintf("NSEC3 covers wildcard: %s", wildCard))
+	}
+
+	// verify signatures of Authority Section
+	var currentRR dns.RR
+	for _, v := range m.GetMsg().Ns {
+
+		if rrsig, ok := v.(*dns.RRSIG); ok {
+			kk := parentDnsKeyResp.ByKeyTag(rrsig.KeyTag)
+
+			if err := VerifySig(kk, rrsig, []dns.RR{currentRR}); err != nil {
+				return fmt.Errorf("invalid key found: %s", err.Error())
+			}
+			continue
+		}
+
+		currentRR = v
+	}
+
+	return nil
+}
+
+func Nsec3Covers(name string, nsec3 []*dns.NSEC3) bool {
+	for _, v := range nsec3 {
+		if v.Cover(name) {
+			return true
+		}
+	}
+	return false
+}
+
+func FindClosestEncloser(deep int, zone, initial string, nsec3 []*dns.NSEC3) string {
+
+	if len(nsec3) > 0 && nsec3[0].Match(zone) {
+		return zone
+	}
+
+	if zone == initial {
+		return ""
+	}
+
+	subZone := h.SubZone(initial, deep+1)
+	return FindClosestEncloser(deep+1, subZone, initial, nsec3)
 }
 
 // VerifyTrustAnchors compares DNSKEY(s) with the specified trust anchors

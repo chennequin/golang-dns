@@ -109,6 +109,16 @@ func (r DnsMsg) GetDS() *dns.DS {
 	return nil
 }
 
+func (r DnsMsg) GetNSEC3() []*dns.NSEC3 {
+	nsec := make([]*dns.NSEC3, 0, 10)
+	for _, v := range r.m.Ns {
+		if v.Header().Rrtype == dns.TypeNSEC3 {
+			nsec = append(nsec, v.(*dns.NSEC3))
+		}
+	}
+	return nsec
+}
+
 func (r DnsMsg) IsRRSIG() bool {
 	return len(r.GetRRSIG()) > 0
 }
