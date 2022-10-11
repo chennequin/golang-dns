@@ -7,7 +7,8 @@ RUN go test ./...
 RUN CGO_ENABLED=0 go build -a -ldflags '-extldflags "-static"' -o /go/bin/udp-proxy ./cmd/server/
 
 # Now copy it into our base image.
-FROM gcr.io/distroless/static-debian11:debug-nonroot
+#FROM gcr.io/distroless/static-debian11:debug-nonroot
+FROM gcr.io/distroless/static-debian11:nonroot
 USER nonroot
 WORKDIR /
 COPY --from=build /go/bin/udp-proxy /
