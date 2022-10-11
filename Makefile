@@ -1,26 +1,29 @@
 
 build:
-	docker build -t udp-proxy .
+	docker build -t dns-proxy .
 
 start:
-	docker run -d -p 127.0.0.1:53:53/udp --name udp-proxy --mount source=udp-proxy,target=/tmp --restart=always udp-proxy:latest
+	docker run -d -p 127.0.0.1:53:53/udp --name dns-proxy --mount source=dns-proxy,target=/tmp --restart=always dns-proxy:latest
 
 stop:
-	docker container stop udp-proxy
+	docker container stop dns-proxy
 	docker container prune -f
 
 restart: stop start
 
-deploy: build restart
+deploy: build start
 
 debug:
-	docker run --entrypoint=sh -ti --mount source=udp-proxy,target=/tmp udp-proxy
+	docker run --entrypoint=sh -ti --mount source=dns-proxy,target=/tmp dns-proxy
 
 push:
-	docker tag udp-proxy chennequin/udp-proxy & docker push chennequin/udp-proxy
+	docker tag dns-proxy chennequin/dns-proxy & docker push chennequin/dns-proxy
 
 run:
-	docker run -d -p 127.0.0.1:53:53/udp --name udp-proxy --mount source=udp-proxy,target=/tmp --restart=always chennequin/udp-proxy:latest
+	docker run -d -p 127.0.0.1:53:53/udp --name dns-proxy --mount source=dns-proxy,target=/tmp --restart=always chennequin/dns-proxy:latest
+
+run:
+	docker run -d -p 127.0.0.1:53:53/udp --name dns-proxy --mount source=dns-proxy,target=/tmp --restart=always chennequin/dns-proxy:latest
 
 verify:
 	cosign verify --key cosign.pub gcr.io/distroless/static-debian11
